@@ -15,7 +15,7 @@ import {
 import * as argon from 'argon2';
 import { ConfigService } from '@nestjs/config';
 import { JwtService } from '@nestjs/jwt';
-import { Prisma, user } from '@prisma/client';
+import { Prisma, User } from '@prisma/client';
 import { genRandomString } from 'src/helpers/helpers';
 import { pick } from 'lodash';
 import { ErrorMessages } from 'src/helpers/helpers';
@@ -167,7 +167,7 @@ export class AuthService {
   }
 
   async signToken(
-    user: user,
+    user: User,
   ): Promise<{ accessToken: string; refreshToken: string }> {
     const pickedFields: string[] = ['id', 'email', 'name', 'role', 'username'];
     const payload = pick(user, pickedFields);

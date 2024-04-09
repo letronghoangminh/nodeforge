@@ -19,4 +19,9 @@ export default () => ({
     password: process.env.MAIL_PASSWORD,
     from: process.env.MAIL_FROM,
   },
+  githubApp: {
+    name: process.env.GITHUB_APP_NAME,
+    id: process.env.GITHUB_APP_ID,
+    privateKey: Buffer.from(process.env.GITHUB_APP_PRIVATE_KEY, 'base64'),
+  },
 });

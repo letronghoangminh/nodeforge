@@ -18,7 +18,7 @@ import {
   ApiOperation,
   ApiTags,
 } from '@nestjs/swagger';
-import { user } from '@prisma/client';
+import { User } from '@prisma/client';
 import { GetUser } from 'src/auth/decorator/get-user.decorator';
 import { AdminGuard, UserGuard } from 'src/auth/guard/auth.guard';
 import { APISummaries } from 'src/helpers/helpers';
@@ -28,7 +28,7 @@ import { UserModel } from './model/user.model';
 import { UserService } from './user.service';
 import { VerifiyGuard } from 'src/auth/guard/verify.guard';
 
-type UserType = Pick<user, 'role' | 'id' | 'username' | 'email'>;
+type UserType = Pick<User, 'role' | 'id' | 'username' | 'email'>;
 
 @ApiTags('USER')
 @Controller('users')

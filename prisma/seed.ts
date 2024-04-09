@@ -11,7 +11,19 @@ async function main() {
       hashedPassword: hashedPassword,
       isDeleted: false,
       role: 'ADMIN',
-      name: 'Minh Le',
+      name: 'Admin',
+      isVerified: true,
+      username: 'admin',
+      email: 'admin@nodeforge.site',
+    },
+  });
+
+  await prisma.user.create({
+    data: {
+      hashedPassword: hashedPassword,
+      isDeleted: false,
+      role: 'USER',
+      name: 'Minh',
       isVerified: true,
       username: 'psycholog1st',
       email: 'letronghoangminh@gmail.com',
