@@ -61,6 +61,18 @@ export class GithubService {
     return githubRestClient;
   }
 
+  private async getGithubProfile(userId: number): Promise<GithubProfileModel> {
+    const githubProfile = await this.prismaService.githubProfile.findFirst({
+      where: {
+        userId: userId,
+      },
+    });
+
+    if (!githubProfile) throw new NotFoundException('Installation not found');
+
+    return PlainToInstance(GithubProfileModel, githubProfile);
+  }
+
   async getAuthorizeUrl(): Promise<AuthorizeUrlModel> {
     return {
       url: `https://github.com/apps/${this.configService.get(
@@ -112,13 +124,7 @@ export class GithubService {
     id: number;
   }): Promise<MessageModel> {
     try {
-      const githubProfile = await this.prismaService.githubProfile.findFirst({
-        where: {
-          userId: user.id,
-        },
-      });
-
-      if (!githubProfile) throw new NotFoundException('Installation not found');
+      const githubProfile = await this.getGithubProfile(user.id);
 
       await this.githubApp.apps.deleteInstallation({
         installation_id: githubProfile.installationId,
@@ -145,13 +151,7 @@ export class GithubService {
     id: number;
   }): Promise<GithubRepositoryModel[]> {
     try {
-      const githubProfile = await this.prismaService.githubProfile.findFirst({
-        where: {
-          userId: user.id,
-        },
-      });
-
-      if (!githubProfile) throw new NotFoundException('Installation not found');
+      const githubProfile = await this.getGithubProfile(user.id);
 
       const githubRestClient = await this.createInstallationAuth(
         githubProfile.installationId,
@@ -190,13 +190,7 @@ export class GithubService {
     },
   ): Promise<GithubBranchModel[]> {
     try {
-      const githubProfile = await this.prismaService.githubProfile.findFirst({
-        where: {
-          userId: user.id,
-        },
-      });
-
-      if (!githubProfile) throw new NotFoundException('Installation not found');
+      const githubProfile = await this.getGithubProfile(user.id);
 
       const githubRestClient = await this.createInstallationAuth(
         githubProfile.installationId,
