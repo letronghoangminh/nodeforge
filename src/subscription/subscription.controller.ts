@@ -25,7 +25,10 @@ import {
   SubscriptionModel,
 } from './model/subscription.model';
 import { VerifiyGuard } from 'src/auth/guard/verify.guard';
-import { FreeSubscriptionGuard } from './guard/subscription.guard';
+import {
+  FreeSubscriptionGuard,
+  ProSubscriptionGuard,
+} from './guard/subscription.guard';
 import { RequestWithRawBody } from 'src/helpers/interfaces';
 
 @Controller('subscription')
@@ -59,7 +62,7 @@ export class SubscriptionController {
   @ApiOperation({ summary: APISummaries.USER })
   @ApiOkResponse({ type: PortalSessionModel })
   @ApiBearerAuth()
-  @UseGuards(UserGuard, VerifiyGuard)
+  @UseGuards(UserGuard, VerifiyGuard, ProSubscriptionGuard)
   @Get('portal-session')
   createPortalSession(@GetUser() user: UserType): Promise<PortalSessionModel> {
     return this.subscriptionService.createPortalSession(user);
