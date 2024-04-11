@@ -37,29 +37,16 @@ model Subscription {
   id                      Int              @id @default(autoincrement())
   type                    SubscriptionType @default(FREE)
   stripeCheckoutSessionId String?
+  stripeCustomerId        String?
+  stripeSubscriptionId    String?
 
   createdAt DateTime @default(now()) @db.DateTime(0)
   updatedAt DateTime @default(now()) @updatedAt @db.DateTime(0)
 
-  userId         Int              @unique
-  user           User             @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: NoAction)
-  PaymentHistory PaymentHistory[]
+  userId Int  @unique
+  user   User @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: NoAction)
 
   @@index([userId, stripeCheckoutSessionId])
-}
-
-model PaymentHistory {
-  id                 Int    @id @default(autoincrement())
-  type               String
-  subscriptionStatus String
-
-  createdAt DateTime @default(now()) @db.DateTime(0)
-  updatedAt DateTime @default(now()) @updatedAt @db.DateTime(0)
-
-  subscriptionId Int
-  subscription   Subscription @relation(fields: [subscriptionId], references: [id], onDelete: Cascade, onUpdate: NoAction)
-
-  @@index([subscriptionId])
 }
 
 model GithubProfile {

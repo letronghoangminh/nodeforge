@@ -15,7 +15,7 @@ import {
 import * as argon from 'argon2';
 import { ConfigService } from '@nestjs/config';
 import { JwtService } from '@nestjs/jwt';
-import { Prisma, User } from '@prisma/client';
+import { Prisma, SubscriptionType, User } from '@prisma/client';
 import { genRandomString } from 'src/helpers/helpers';
 import { pick } from 'lodash';
 import { ErrorMessages } from 'src/helpers/helpers';
@@ -42,6 +42,13 @@ export class AuthService {
           hashedPassword: hashedPassword,
           name: dto.name,
           verifyToken: genRandomString(20),
+        },
+      });
+
+      await this.prisma.subscription.create({
+        data: {
+          userId: user.id,
+          type: SubscriptionType.FREE,
         },
       });
 

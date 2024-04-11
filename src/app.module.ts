@@ -6,6 +6,7 @@ import { AuthModule } from './auth/auth.module';
 import { UserModule } from './user/user.module';
 import { MailModule } from './mail/mail.module';
 import { GithubModule } from './github/github.module';
+import { SubscriptionModule } from './subscription/subscription.module';
 
 @Module({
   imports: [
@@ -19,6 +20,7 @@ import { GithubModule } from './github/github.module';
     UserModule,
     MailModule,
     GithubModule,
+    SubscriptionModule,
   ],
 })
 export class AppModule {}

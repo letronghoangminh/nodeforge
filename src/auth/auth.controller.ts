@@ -14,7 +14,6 @@ import {
   ApiOperation,
   ApiTags,
 } from '@nestjs/swagger';
-import { User } from '@prisma/client';
 import { APISummaries } from 'src/helpers/helpers';
 import { AuthService } from './auth.service';
 import { GetUser } from './decorator/get-user.decorator';
@@ -28,8 +27,7 @@ import {
 } from './dto/auth.dto';
 import { UserGuard } from './guard/auth.guard';
 import { AuthModel } from './model/auth.model';
-
-type UserType = Pick<User, 'role' | 'id' | 'username' | 'email'>;
+import { UserType } from 'src/helpers/types';
 
 @Controller('auth')
 @ApiTags('AUTH')

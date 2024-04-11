@@ -8,10 +8,10 @@ export default () => ({
     docsUrl: process.env.DOCS_URL || 'docs',
   },
   database: {
-    url: process.env.DATABASE_URL,
+    url: process.env.DATABASE_URL || 'mysql://root:root@127.0.0.1:3306/api',
   },
   auth: {
-    jwtSecret: process.env.JWT_SECRET,
+    jwtSecret: process.env.JWT_SECRET || 'r@nD0mS3kr3t',
   },
   mail: {
     host: process.env.MAIL_HOST,
@@ -20,8 +20,13 @@ export default () => ({
     from: process.env.MAIL_FROM,
   },
   githubApp: {
-    name: process.env.GITHUB_APP_NAME,
+    name: process.env.GITHUB_APP_NAME || 'node-forge',
     id: process.env.GITHUB_APP_ID,
     privateKey: Buffer.from(process.env.GITHUB_APP_PRIVATE_KEY, 'base64'),
+  },
+  stripe: {
+    apiKey: process.env.STRIPE_API_KEY,
+    webhookSecret: process.env.STRIPE_WEBHOOK_SECRET,
+    priceLookupKey: process.env.STRIPE_PRICE_LOOKUP_KEY || 'NodeForge',
   },
 });

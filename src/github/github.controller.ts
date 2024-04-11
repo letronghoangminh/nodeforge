@@ -25,15 +25,13 @@ import {
   GithubRepositoryModel,
 } from './model/github.model';
 import { GithubService } from './github.service';
-import { User } from '@prisma/client';
 import { GetUser } from 'src/auth/decorator/get-user.decorator';
 import { GetGithubBranchesDto, SaveGithubProfileDto } from './dto/github.dto';
 import { MessageModel } from 'src/helpers/model';
-
-type UserType = Pick<User, 'role' | 'id' | 'username' | 'email'>;
+import { UserType } from 'src/helpers/types';
 
 @Controller('github')
-@ApiTags('Github')
+@ApiTags('GITHUB')
 export class GithubController {
   constructor(private githubService: GithubService) {}
 
