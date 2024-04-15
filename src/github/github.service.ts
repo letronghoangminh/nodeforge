@@ -35,9 +35,7 @@ export class GithubService {
     });
   }
 
-  private async createInstallationAccessToken(
-    installationId: number,
-  ): Promise<string> {
+  async createInstallationAccessToken(installationId: number): Promise<string> {
     const accessToken = await this.githubApp.apps.createInstallationAccessToken(
       {
         installation_id: installationId,

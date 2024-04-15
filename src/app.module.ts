@@ -7,6 +7,9 @@ import { UserModule } from './user/user.module';
 import { MailModule } from './mail/mail.module';
 import { GithubModule } from './github/github.module';
 import { SubscriptionModule } from './subscription/subscription.module';
+import { DeploymentModule } from './deployment/deployment.module';
+import { OpenaiModule } from './openai/openai.module';
+import { AmplifyModule } from './amplify/amplify.module';
 
 @Module({
   imports: [
@@ -21,6 +24,9 @@ import { SubscriptionModule } from './subscription/subscription.module';
     MailModule,
     GithubModule,
     SubscriptionModule,
+    DeploymentModule,
+    OpenaiModule,
+    AmplifyModule,
   ],
 })
 export class AppModule {}
