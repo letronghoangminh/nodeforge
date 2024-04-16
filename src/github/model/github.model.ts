@@ -9,8 +9,8 @@ export class AuthorizeUrlModel {
 
 export class GithubProfileModel {
   @Expose()
-  @ApiProperty({ type: String })
-  id: string;
+  @ApiProperty({ type: Number })
+  id: number;
 
   @Expose()
   @ApiProperty({ type: Number })

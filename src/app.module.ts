@@ -10,6 +10,7 @@ import { SubscriptionModule } from './subscription/subscription.module';
 import { DeploymentModule } from './deployment/deployment.module';
 import { OpenaiModule } from './openai/openai.module';
 import { AmplifyModule } from './amplify/amplify.module';
+import { EcsModule } from './ecs/ecs.module';
 
 @Module({
   imports: [
@@ -27,6 +28,7 @@ import { AmplifyModule } from './amplify/amplify.module';
     DeploymentModule,
     OpenaiModule,
     AmplifyModule,
+    EcsModule,
   ],
 })
 export class AppModule {}

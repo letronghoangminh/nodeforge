@@ -25,7 +25,7 @@ import { PageDto } from 'src/prisma/helper/prisma.helper';
 import { UpdateUserDto } from './dto/user.dto';
 import { UserModel } from './model/user.model';
 import { UserService } from './user.service';
-import { VerifiyGuard } from 'src/auth/guard/verify.guard';
+import { VerifyGuard } from 'src/auth/guard/verify.guard';
 import { UserType } from 'src/helpers/types';
 
 @ApiTags('USER')
@@ -65,7 +65,7 @@ export class UserController {
   @ApiOperation({ summary: APISummaries.USER })
   @ApiOkResponse({ type: UserModel })
   @ApiBearerAuth()
-  @UseGuards(UserGuard, VerifiyGuard)
+  @UseGuards(UserGuard, VerifyGuard)
   @Put(':username')
   updateUser(
     @Param('username') username: string,

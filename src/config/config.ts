@@ -3,6 +3,7 @@ export default () => ({
     env: process.env.APP_ENV || 'development',
     port: parseInt(process.env.APP_PORT, 10) || 3000,
     root: process.env.APPLICATION_ROOT,
+    domain: process.env.APP_DOMAIN,
   },
   swagger: {
     docsUrl: process.env.DOCS_URL || 'docs',
@@ -28,5 +29,8 @@ export default () => ({
     apiKey: process.env.STRIPE_API_KEY,
     webhookSecret: process.env.STRIPE_WEBHOOK_SECRET,
     priceLookupKey: process.env.STRIPE_PRICE_LOOKUP_KEY || 'NodeForge',
+  },
+  aws: {
+    region: process.env.AWS_REGION,
   },
 });

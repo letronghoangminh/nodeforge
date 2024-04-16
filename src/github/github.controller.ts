@@ -17,7 +17,7 @@ import {
 } from '@nestjs/swagger';
 import { UserGuard } from 'src/auth/guard/auth.guard';
 import { APISummaries } from 'src/helpers/helpers';
-import { VerifiyGuard } from 'src/auth/guard/verify.guard';
+import { VerifyGuard } from 'src/auth/guard/verify.guard';
 import {
   AuthorizeUrlModel,
   GithubBranchModel,
@@ -39,7 +39,7 @@ export class GithubController {
   @ApiOperation({ summary: APISummaries.USER })
   @ApiOkResponse({ type: AuthorizeUrlModel })
   @ApiBearerAuth()
-  @UseGuards(UserGuard, VerifiyGuard)
+  @UseGuards(UserGuard, VerifyGuard)
   @Get('/authorize')
   getAuthorizeUrl(): Promise<AuthorizeUrlModel> {
     return this.githubService.getAuthorizeUrl();
@@ -49,7 +49,7 @@ export class GithubController {
   @ApiOperation({ summary: APISummaries.USER })
   @ApiOkResponse({ type: GithubProfileModel })
   @ApiBearerAuth()
-  @UseGuards(UserGuard, VerifiyGuard)
+  @UseGuards(UserGuard, VerifyGuard)
   @Post('/profile')
   saveGithubProfile(
     @Body() dto: SaveGithubProfileDto,
@@ -62,7 +62,7 @@ export class GithubController {
   @ApiOperation({ summary: APISummaries.USER })
   @ApiOkResponse({ type: MessageModel })
   @ApiBearerAuth()
-  @UseGuards(UserGuard, VerifiyGuard)
+  @UseGuards(UserGuard, VerifyGuard)
   @Delete('/profile')
   deleteGithubProfile(@GetUser() user: UserType): Promise<MessageModel> {
     return this.githubService.deleteGithubProfile(user);
@@ -72,7 +72,7 @@ export class GithubController {
   @ApiOperation({ summary: APISummaries.USER })
   @ApiOkResponse({ type: [GithubRepositoryModel] })
   @ApiBearerAuth()
-  @UseGuards(UserGuard, VerifiyGuard)
+  @UseGuards(UserGuard, VerifyGuard)
   @Get('/repos')
   getGithubRepositories(
     @GetUser() user: UserType,
@@ -84,7 +84,7 @@ export class GithubController {
   @ApiOperation({ summary: APISummaries.USER })
   @ApiOkResponse({ type: [GithubBranchModel] })
   @ApiBearerAuth()
-  @UseGuards(UserGuard, VerifiyGuard)
+  @UseGuards(UserGuard, VerifyGuard)
   @Get('/branches')
   getGithubBranches(
     @Query() query: GetGithubBranchesDto,

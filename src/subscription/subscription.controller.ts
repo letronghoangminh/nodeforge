@@ -24,7 +24,7 @@ import {
   PortalSessionModel,
   SubscriptionModel,
 } from './model/subscription.model';
-import { VerifiyGuard } from 'src/auth/guard/verify.guard';
+import { VerifyGuard } from 'src/auth/guard/verify.guard';
 import {
   FreeSubscriptionGuard,
   ProSubscriptionGuard,
@@ -50,7 +50,7 @@ export class SubscriptionController {
   @ApiOperation({ summary: APISummaries.USER })
   @ApiOkResponse({ type: FinishCheckoutModel })
   @ApiBearerAuth()
-  @UseGuards(UserGuard, VerifiyGuard, FreeSubscriptionGuard)
+  @UseGuards(UserGuard, VerifyGuard, FreeSubscriptionGuard)
   @Get('pro-subscription')
   purchaseProSubscription(
     @GetUser() user: UserType,
@@ -62,7 +62,7 @@ export class SubscriptionController {
   @ApiOperation({ summary: APISummaries.USER })
   @ApiOkResponse({ type: PortalSessionModel })
   @ApiBearerAuth()
-  @UseGuards(UserGuard, VerifiyGuard, ProSubscriptionGuard)
+  @UseGuards(UserGuard, VerifyGuard, ProSubscriptionGuard)
   @Get('portal-session')
   createPortalSession(@GetUser() user: UserType): Promise<PortalSessionModel> {
     return this.subscriptionService.createPortalSession(user);

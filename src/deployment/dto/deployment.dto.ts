@@ -13,11 +13,19 @@ export class CreateDeploymentDto {
 
   @IsString()
   @ApiProperty({ type: String })
+  name: string;
+
+  @IsString()
+  @ApiProperty({ type: String })
   repositoryName: string;
 
   @IsString()
   @ApiProperty({ type: String })
   repositoryBranch: string;
+
+  @IsString()
+  @ApiProperty({ type: String })
+  repositoryUrl: string;
 
   @IsString()
   @ApiProperty({ type: String })

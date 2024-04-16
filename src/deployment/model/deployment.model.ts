@@ -1,7 +1,44 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { Expose } from 'class-transformer';
+import { Expose, Transform } from 'class-transformer';
+import { AmplifyConfigurationModel } from 'src/amplify/model/amplify.model';
+import { ECSConfigurationModel } from 'src/ecs/model/ecs.model';
+import { PlainToInstance } from 'src/helpers/helpers';
+
+export class RepositoryModel {
+  @Expose()
+  @ApiProperty({ type: Number })
+  id: number;
+
+  @Expose()
+  @ApiProperty({ type: Number })
+  githubProfileId: number;
+
+  @Expose()
+  @ApiProperty({ type: String })
+  name: string;
+
+  @Expose()
+  @ApiProperty({ type: String })
+  branch: string;
+
+  @Expose()
+  @ApiProperty({ type: String })
+  url: string;
+
+  @Expose()
+  @ApiProperty({ type: Date })
+  createdAt: Date;
+
+  @Expose()
+  @ApiProperty({ type: Date })
+  updatedAt: Date;
+}
 
 export class DeploymentModel {
+  @Expose()
+  @ApiProperty({ type: Number })
+  id: number;
+
   @Expose()
   @ApiProperty({ type: String })
   type: string;
@@ -23,10 +60,43 @@ export class DeploymentModel {
   subdomain: string;
 
   @Expose()
+  @ApiProperty({ type: String })
+  name: string;
+
+  @Expose()
   @ApiProperty({ type: Date })
   createdAt: Date;
 
   @Expose()
   @ApiProperty({ type: Date })
   updatedAt: Date;
+
+  @Expose()
+  @ApiProperty({ type: RepositoryModel })
+  @Transform(({ obj }) => PlainToInstance(RepositoryModel, obj.repository))
+  repository: RepositoryModel;
+
+  @Expose()
+  @ApiProperty({ type: AmplifyConfigurationModel })
+  @Transform(({ obj }) =>
+    PlainToInstance(AmplifyConfigurationModel, obj.AmplifyConfiguration),
+  )
+  amplifyConfiguration: AmplifyConfigurationModel;
+
+  @Expose()
+  @ApiProperty({ type: ECSConfigurationModel })
+  @Transform(({ obj }) =>
+    PlainToInstance(ECSConfigurationModel, obj.ECSConfiguration),
+  )
+  ecsConfiguration: ECSConfigurationModel;
+}
+
+export class EnvironmentModel {
+  @Expose()
+  @ApiProperty({ type: Number })
+  id: number;
+
+  @Expose()
+  @ApiProperty({ type: Object, additionalProperties: { type: 'string' } })
+  envVars: Record<string, string>;
 }

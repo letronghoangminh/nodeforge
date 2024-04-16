@@ -1,11 +1,17 @@
-import { ForbiddenException, Injectable } from '@nestjs/common';
+import {
+  BadRequestException,
+  ForbiddenException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { CreateDeploymentDto } from './dto/deployment.dto';
-import { DeploymentModel } from './model/deployment.model';
+import { DeploymentModel, EnvironmentModel } from './model/deployment.model';
 import { AmplifyService } from 'src/amplify/amplify.service';
 import {
   DeploymentStatus,
   DeploymentType,
+  Environment,
   Repository,
   SubscriptionType,
 } from '@prisma/client';
@@ -40,6 +46,7 @@ export class DeploymentService {
   async createRepository(
     name: string,
     branch: string,
+    url: string,
     userId: number,
   ): Promise<Repository> {
     const githubProfile = await this.prismaService.githubProfile.findFirst({
@@ -68,6 +75,7 @@ export class DeploymentService {
         branch,
         name,
         githubProfileId: githubProfile.id,
+        url,
       },
     });
 
@@ -107,6 +115,92 @@ export class DeploymentService {
       );
   }
 
+  private async createEnvironment(
+    envVars: Record<string, string>,
+  ): Promise<Environment> {
+    return await this.prismaService.environment.create({
+      data: {
+        envVars: envVars,
+      },
+    });
+  }
+
+  async getDeployments(user: { id: number }): Promise<DeploymentModel[]> {
+    const deployments = await this.prismaService.deployment.findMany({
+      where: {
+        userId: user.id,
+      },
+      include: {
+        repository: true,
+        AmplifyConfiguration: true,
+        ECSConfiguration: true,
+      },
+    });
+
+    return PlainToInstance(DeploymentModel, deployments);
+  }
+
+  async getDeploymentById(
+    id: number,
+    user: { id: number },
+  ): Promise<DeploymentModel> {
+    const deployment = await this.prismaService.deployment.findFirst({
+      where: {
+        id: id,
+        userId: user.id,
+      },
+      include: {
+        repository: true,
+        AmplifyConfiguration: true,
+        ECSConfiguration: true,
+      },
+    });
+
+    if (!deployment) throw new NotFoundException('No deployment found');
+
+    return PlainToInstance(DeploymentModel, deployment);
+  }
+
+  async getEnvironmentByDeploymentId(
+    id: number,
+    user: { id: number },
+  ): Promise<EnvironmentModel> {
+    const deployment = await this.prismaService.deployment.findFirst({
+      where: {
+        id: id,
+        userId: user.id,
+      },
+      select: {
+        id: true,
+        ECSConfiguration: {
+          select: {
+            environmentId: true,
+          },
+        },
+        AmplifyConfiguration: {
+          select: {
+            environmentId: true,
+          },
+        },
+      },
+    });
+
+    if (!deployment) throw new NotFoundException('No deployment found');
+
+    const environment = await this.prismaService.environment.findFirst({
+      where: {
+        id:
+          deployment.AmplifyConfiguration?.environmentId ||
+          deployment.ECSConfiguration?.environmentId,
+      },
+    });
+
+    console.log(environment.envVars);
+    console.log(typeof environment.envVars);
+
+    return PlainToInstance(EnvironmentModel, environment);
+  }
+
   async createNewDeployment(
     dto: CreateDeploymentDto,
     user: { id: number },
@@ -118,13 +212,11 @@ export class DeploymentService {
     const repository = await this.createRepository(
       dto.repositoryName,
       dto.repositoryBranch,
+      dto.repositoryUrl,
       user.id,
     );
 
     const accessToken = await this.getGithubAccessToken(user.id);
-
-    if (dto.type === DeploymentType.FRONTEND)
-      this.amplifyService.createNewDeployment(dto, repository, accessToken);
 
     const deployment = await this.prismaService.deployment.create({
       data: {
@@ -133,6 +225,77 @@ export class DeploymentService {
         framework: dto.framework,
         repositoryId: repository.id,
         status: DeploymentStatus.PENDING,
+        name: dto.name,
+      },
+    });
+
+    const environment = await this.createEnvironment(dto.envVars);
+
+    let status = DeploymentStatus.SUCCESS as string;
+
+    try {
+      if (dto.type === DeploymentType.FRONTEND)
+        await this.amplifyService.createNewDeployment(
+          dto,
+          repository,
+          accessToken,
+          deployment.id,
+          environment.id,
+        );
+    } catch (error) {
+      console.log(error);
+      status = DeploymentStatus.FAILURE;
+    } finally {
+      const result = await this.prismaService.deployment.update({
+        where: {
+          id: deployment.id,
+        },
+        data: {
+          status: status as DeploymentStatus,
+        },
+        include: {
+          repository: true,
+          ECSConfiguration: true,
+          AmplifyConfiguration: true,
+        },
+      });
+
+      return PlainToInstance(DeploymentModel, result);
+    }
+  }
+
+  async deleteDeploymenByDeploymentId(
+    id: number,
+    user: { id: number },
+  ): Promise<DeploymentModel> {
+    const deployment = await this.prismaService.deployment.findFirst({
+      where: {
+        id: id,
+        userId: user.id,
+      },
+    });
+
+    if (!deployment) throw new NotFoundException('No deployment found');
+
+    try {
+      if (deployment.type === DeploymentType.FRONTEND)
+        await this.amplifyService.deleteDeployment(deployment.id);
+    } catch (error) {
+      console.log(error);
+      throw new BadRequestException(
+        'Cannot delete deployment, please try again later',
+      );
+    }
+
+    await this.prismaService.deployment.delete({
+      where: {
+        id: deployment.id,
+      },
+    });
+
+    await this.prismaService.repository.delete({
+      where: {
+        id: deployment.repositoryId,
       },
     });
 
