@@ -43,7 +43,7 @@ export class AmplifyService {
   }
 
   private addAmplifyPlatform(input: CreateAppCommandInput, framework: string) {
-    input['platform'] = AmplifyApplicationTypeMapping[framework];
+    input.platform = AmplifyApplicationTypeMapping[framework];
   }
 
   private addAmplifyBuildSpec(input: CreateAppCommandInput, framework: string) {
