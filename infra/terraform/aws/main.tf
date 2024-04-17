@@ -19,17 +19,15 @@ module "ecs" {
   environment = local.environment
 }
 
-# module "vpc" {
-#   source = "../modules/aws/vpc"
+module "vpc" {
+  source = "../modules/aws/vpc"
 
-#   availability_zones = local.availability_zones
-#   cidr_block         = local.cidr_block
-#   environment        = local.environment
-#   name               = "vpc-${module.shared.stack_name}"
-#   private_subnets    = local.private_subnets
-#   public_subnets     = local.public_subnets
-#   single_nat         = true
-# }
+  availability_zones = local.availability_zones
+  cidr_block         = local.cidr_block
+  environment        = local.environment
+  name               = local.name
+  public_subnets     = local.public_subnets
+}
 
 # module "alb" {
 #   source = "../modules/aws/alb"

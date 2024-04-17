@@ -1,5 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsIn, IsString } from 'class-validator';
+import { IsIn, IsNumber, IsString } from 'class-validator';
 
 export class CreateDeploymentDto {
   @IsString()
@@ -39,4 +39,13 @@ export class CheckSubdomainDto {
   @IsString()
   @ApiProperty({ type: String })
   subdomain: string;
+}
+
+export class UpdateEnvironmentDto {
+  @IsNumber()
+  @ApiProperty({ type: Number })
+  id: number;
+
+  @ApiProperty({ type: Object, additionalProperties: { type: 'string' } })
+  envVars: Record<string, string>;
 }

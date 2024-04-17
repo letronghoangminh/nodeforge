@@ -7,13 +7,13 @@ export const AmplifyApplicationTypeMapping = {
 };
 
 export const AmplifyBuildSpecMapping = {
-  NEXTJS: `
+  NEXT: `
 version: 1
 frontend:
   phases:
     preBuild:
       commands:
-        - npm ci
+        - npm install
     build:
       commands:
         - env > .env
@@ -49,7 +49,7 @@ frontend:
   phases:
     preBuild:
       commands:
-        - npm ci
+        - npm install
     build:
       commands:
         - env > .env
@@ -67,7 +67,7 @@ frontend:
     phases:
       preBuild:
         commands:
-          - npm ci
+          - npm install
       build:
         commands:
           - env > .env
@@ -79,4 +79,12 @@ frontend:
     cache:
       paths:
         - node_modules/**/*`,
+};
+
+export const AmplifyFrameworkMapping = {
+  NEXT: 'Next.js - SSR',
+  REACT: 'REACT',
+  VUE: 'VUE',
+  ANGULAR: 'ANGULAR',
+  OTHER: '',
 };

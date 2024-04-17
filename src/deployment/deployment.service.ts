@@ -5,7 +5,10 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { PrismaService } from 'src/prisma/prisma.service';
-import { CreateDeploymentDto } from './dto/deployment.dto';
+import {
+  CreateDeploymentDto,
+  UpdateEnvironmentDto,
+} from './dto/deployment.dto';
 import { DeploymentModel, EnvironmentModel } from './model/deployment.model';
 import { AmplifyService } from 'src/amplify/amplify.service';
 import {
@@ -195,10 +198,84 @@ export class DeploymentService {
       },
     });
 
-    console.log(environment.envVars);
-    console.log(typeof environment.envVars);
+    return PlainToInstance(EnvironmentModel, environment);
+  }
+
+  async updateEnvironmentByDeploymentId(
+    dto: UpdateEnvironmentDto,
+    user: { id: number },
+  ): Promise<EnvironmentModel> {
+    const deployment = await this.prismaService.deployment.findFirst({
+      where: {
+        id: dto.id,
+        userId: user.id,
+      },
+      select: {
+        id: true,
+        ECSConfiguration: {
+          select: {
+            environmentId: true,
+          },
+        },
+        AmplifyConfiguration: {
+          select: {
+            environmentId: true,
+            appId: true,
+            productionBranch: true,
+          },
+        },
+      },
+    });
+
+    if (!deployment) throw new NotFoundException('No deployment found');
+
+    const environment = await this.prismaService.environment.update({
+      where: {
+        id:
+          deployment.AmplifyConfiguration?.environmentId ||
+          deployment.ECSConfiguration?.environmentId,
+      },
+      data: {
+        envVars: dto.envVars,
+      },
+    });
 
     return PlainToInstance(EnvironmentModel, environment);
+  }
+
+  async getLogsByDeploymentId(
+    id: number,
+    user: { id: number },
+  ): Promise<EnvironmentModel> {
+    const deployment = await this.prismaService.deployment.findFirst({
+      where: {
+        id: id,
+        userId: user.id,
+      },
+      select: {
+        id: true,
+        ECSConfiguration: {
+          select: {
+            environmentId: true,
+          },
+        },
+        AmplifyConfiguration: {
+          select: {
+            appId: true,
+          },
+        },
+      },
+    });
+
+    if (!deployment) throw new NotFoundException('No deployment found');
+
+    if (deployment.AmplifyConfiguration) {
+      await this.amplifyService.getDeploymentLogs(
+        deployment.AmplifyConfiguration.appId,
+      );
+    }
+
+    return PlainToInstance(EnvironmentModel, null);
   }
 
   async createNewDeployment(
@@ -273,19 +350,45 @@ export class DeploymentService {
         id: id,
         userId: user.id,
       },
+      select: {
+        id: true,
+        type: true,
+        repositoryId: true,
+        ECSConfiguration: {
+          select: {
+            environmentId: true,
+          },
+        },
+        AmplifyConfiguration: {
+          select: {
+            environmentId: true,
+            appId: true,
+          },
+        },
+      },
     });
 
     if (!deployment) throw new NotFoundException('No deployment found');
 
     try {
       if (deployment.type === DeploymentType.FRONTEND)
-        await this.amplifyService.deleteDeployment(deployment.id);
+        await this.amplifyService.deleteDeployment(
+          deployment.AmplifyConfiguration.appId,
+        );
     } catch (error) {
       console.log(error);
       throw new BadRequestException(
         'Cannot delete deployment, please try again later',
       );
     }
+
+    await this.prismaService.environment.delete({
+      where: {
+        id:
+          deployment.AmplifyConfiguration?.environmentId ||
+          deployment.ECSConfiguration?.environmentId,
+      },
+    });
 
     await this.prismaService.deployment.delete({
       where: {

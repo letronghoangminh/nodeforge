@@ -98,5 +98,6 @@ export class EnvironmentModel {
 
   @Expose()
   @ApiProperty({ type: Object, additionalProperties: { type: 'string' } })
+  @Transform(({ obj }) => JSON.parse(JSON.stringify(obj.envVars)))
   envVars: Record<string, string>;
 }

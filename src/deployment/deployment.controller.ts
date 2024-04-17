@@ -8,6 +8,7 @@ import {
   Param,
   ParseIntPipe,
   Post,
+  Put,
   UseGuards,
 } from '@nestjs/common';
 import { DeploymentService } from './deployment.service';
@@ -20,7 +21,11 @@ import {
 import { APISummaries } from 'src/helpers/helpers';
 import { UserGuard } from 'src/auth/guard/auth.guard';
 import { VerifyGuard } from 'src/auth/guard/verify.guard';
-import { CheckSubdomainDto, CreateDeploymentDto } from './dto/deployment.dto';
+import {
+  CheckSubdomainDto,
+  CreateDeploymentDto,
+  UpdateEnvironmentDto,
+} from './dto/deployment.dto';
 import { GetUser } from 'src/auth/decorator/get-user.decorator';
 import { DeploymentModel, EnvironmentModel } from './model/deployment.model';
 import { UserType } from 'src/helpers/types';
@@ -77,6 +82,32 @@ export class DeploymentController {
     @GetUser() user: UserType,
   ): Promise<EnvironmentModel> {
     return this.deploymentService.getEnvironmentByDeploymentId(id, user);
+  }
+
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({ summary: APISummaries.USER })
+  @ApiOkResponse({ type: EnvironmentModel })
+  @ApiBearerAuth()
+  @UseGuards(UserGuard, VerifyGuard)
+  @Put('environment')
+  updateEnvironmentByDeploymentId(
+    @Body() dto: UpdateEnvironmentDto,
+    @GetUser() user: UserType,
+  ): Promise<EnvironmentModel> {
+    return this.deploymentService.updateEnvironmentByDeploymentId(dto, user);
+  }
+
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({ summary: APISummaries.USER })
+  @ApiOkResponse({ type: EnvironmentModel })
+  @ApiBearerAuth()
+  @UseGuards(UserGuard, VerifyGuard)
+  @Get(':id/logs')
+  getLogsByDeploymentId(
+    @Param('id', ParseIntPipe) id: number,
+    @GetUser() user: UserType,
+  ): Promise<EnvironmentModel> {
+    return this.deploymentService.getLogsByDeploymentId(id, user);
   }
 
   @HttpCode(HttpStatus.OK)

@@ -15,18 +15,24 @@ import {
   DeleteAppCommand,
   DeleteAppCommandInput,
   DeleteAppCommandOutput,
+  GenerateAccessLogsCommand,
+  GenerateAccessLogsCommandInput,
+  GenerateAccessLogsCommandOutput,
   JobType,
   Stage,
   StartJobCommand,
   StartJobCommandInput,
   StartJobCommandOutput,
+  UpdateAppCommand,
+  UpdateAppCommandInput,
+  UpdateAppCommandOutput,
 } from '@aws-sdk/client-amplify';
 import { Repository } from '@prisma/client';
 import { ConfigService } from '@nestjs/config';
-import { FrameworkEnum } from './enum/amplify.enum';
 import {
   AmplifyApplicationTypeMapping,
   AmplifyBuildSpecMapping,
+  AmplifyFrameworkMapping,
 } from './mapping/amplify.mapping';
 
 @Injectable()
@@ -96,7 +102,7 @@ export class AmplifyService {
       appId: appId,
       branchName: dto.repositoryBranch,
       stage: 'PRODUCTION' as Stage,
-      framework: dto.framework,
+      framework: AmplifyFrameworkMapping[dto.framework],
       enableAutoBuild: true,
     };
   }
@@ -111,12 +117,12 @@ export class AmplifyService {
   }
 
   private buildStartDeploymentInput(
-    dto: CreateDeploymentDto,
+    branch: string,
     appId: string,
   ): StartJobCommandInput {
     return {
       appId: appId,
-      branchName: dto.repositoryBranch,
+      branchName: branch,
       jobType: 'RELEASE' as JobType,
     };
   }
@@ -158,11 +164,36 @@ export class AmplifyService {
     >(CreateDomainAssociationCommand, input);
   }
 
+  private buildGetLogsInput(appId: string): GenerateAccessLogsCommandInput {
+    return {
+      appId: appId,
+      domainName: this.configService.get('app.domain'),
+    };
+  }
+
+  private async getLogs(
+    input: GenerateAccessLogsCommandInput,
+  ): Promise<GenerateAccessLogsCommandOutput> {
+    return this.sendAwsCommand<
+      GenerateAccessLogsCommandInput,
+      GenerateAccessLogsCommandOutput
+    >(GenerateAccessLogsCommand, input);
+  }
+
   private async deleteApp(
     input: DeleteAppCommandInput,
   ): Promise<DeleteAppCommandOutput> {
     return this.sendAwsCommand<DeleteAppCommandInput, DeleteAppCommandOutput>(
       DeleteAppCommand,
+      input,
+    );
+  }
+
+  private async updateApp(
+    input: UpdateAppCommandInput,
+  ): Promise<UpdateAppCommandOutput> {
+    return this.sendAwsCommand<UpdateAppCommandInput, UpdateAppCommandOutput>(
+      UpdateAppCommand,
       input,
     );
   }
@@ -188,7 +219,7 @@ export class AmplifyService {
     await this.createAmplifyBranch(createBranchInput);
 
     const startDeploymentInput = this.buildStartDeploymentInput(
-      dto,
+      dto.repositoryBranch,
       appData.app.appId,
     );
     await this.startDeployment(startDeploymentInput);
@@ -205,50 +236,43 @@ export class AmplifyService {
         appId: appData.app.appId,
         subdomain: dto.subdomain,
         environmentId: environmentId,
+        productionBranch: dto.repositoryBranch,
       },
     });
-
-    // switch (dto.framework) {
-    //   case FrameworkEnum.NEXT: {
-    //     // config backend
-    //     break;
-    //   }
-
-    //   default: {
-    //     break;
-    //   }
-    // }
   }
 
-  async deleteDeployment(deploymentId: number): Promise<void> {
-    const amplifyConfiguration =
-      await this.prismaService.amplifyConfiguration.findFirst({
-        where: {
-          deploymentId,
-        },
-        select: {
-          appId: true,
-          id: true,
-          environmentId: true,
-        },
-      });
-
-    const input = {
-      appId: amplifyConfiguration.appId,
+  async deleteDeployment(appId: string): Promise<void> {
+    const deleteAppInput = {
+      appId: appId,
     };
-
-    await this.deleteApp(input);
+    await this.deleteApp(deleteAppInput);
 
     await this.prismaService.amplifyConfiguration.delete({
       where: {
-        id: amplifyConfiguration.id,
+        appId: appId,
       },
     });
+  }
 
-    await this.prismaService.environment.delete({
-      where: {
-        id: amplifyConfiguration.environmentId,
-      },
-    });
+  async updateEnvironment(
+    appId: string,
+    envVars: Record<string, string>,
+    branch: string,
+  ): Promise<void> {
+    const updateAppInput = {
+      appId: appId,
+      environmentVariables: envVars,
+    };
+    await this.updateApp(updateAppInput);
+
+    const startDeploymentInput = this.buildStartDeploymentInput(branch, appId);
+    await this.startDeployment(startDeploymentInput);
+  }
+
+  async getDeploymentLogs(appId: string): Promise<void> {
+    const input = this.buildGetLogsInput(appId);
+    const logs = await this.getLogs(input);
+
+    console.log(logs.logUrl);
   }
 }
