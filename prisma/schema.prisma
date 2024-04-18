@@ -69,6 +69,7 @@ model Repository {
   name   String
   branch String
   url    String
+  owner  String
 
   createdAt DateTime @default(now()) @db.DateTime(0)
   updatedAt DateTime @default(now()) @updatedAt @db.DateTime(0)

@@ -20,6 +20,7 @@ import {
 } from '@prisma/client';
 import { PlainToInstance } from 'src/helpers/helpers';
 import { GithubService } from 'src/github/github.service';
+import { OpenaiService } from 'src/openai/openai.service';
 
 @Injectable()
 export class DeploymentService {
@@ -27,6 +28,7 @@ export class DeploymentService {
     private prismaService: PrismaService,
     private amplifyService: AmplifyService,
     private githubService: GithubService,
+    private openaiService: OpenaiService,
   ) {}
 
   async checkSubdomain(subdomain: string) {
@@ -50,6 +52,7 @@ export class DeploymentService {
     name: string,
     branch: string,
     url: string,
+    owner: string,
     userId: number,
   ): Promise<Repository> {
     const githubProfile = await this.prismaService.githubProfile.findFirst({
@@ -79,6 +82,7 @@ export class DeploymentService {
         name,
         githubProfileId: githubProfile.id,
         url,
+        owner,
       },
     });
 
@@ -290,6 +294,7 @@ export class DeploymentService {
       dto.repositoryName,
       dto.repositoryBranch,
       dto.repositoryUrl,
+      dto.repositoryOwner,
       user.id,
     );
 
@@ -318,6 +323,7 @@ export class DeploymentService {
           accessToken,
           deployment.id,
           environment.id,
+          user.id,
         );
     } catch (error) {
       console.log(error);

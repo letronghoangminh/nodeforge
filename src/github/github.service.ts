@@ -218,4 +218,37 @@ export class GithubService {
       );
     }
   }
+
+  async getFileContent(
+    path: string,
+    repo: string,
+    owner: string,
+    ref: string,
+    userId: number,
+  ): Promise<string> {
+    try {
+      const githubProfile = await this.getGithubProfile(userId);
+
+      const githubRestClient = await this.createInstallationAuth(
+        githubProfile.installationId,
+      );
+
+      const response = await githubRestClient.repos.getContent({
+        repo,
+        owner,
+        path,
+        ref,
+      });
+
+      if (response.status === HttpStatus.OK) {
+        const data: any = response.data;
+
+        if (data.type === 'file') {
+          return Buffer.from(data.content, 'base64').toString();
+        }
+      }
+    } catch (error) {}
+
+    return null;
+  }
 }

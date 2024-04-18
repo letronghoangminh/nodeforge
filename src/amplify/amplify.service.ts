@@ -33,7 +33,11 @@ import {
   AmplifyApplicationTypeMapping,
   AmplifyBuildSpecMapping,
   AmplifyFrameworkMapping,
+  ConfigFilesMapping,
 } from './mapping/amplify.mapping';
+import { GithubService } from 'src/github/github.service';
+import { OpenaiService } from 'src/openai/openai.service';
+import { AmplifyFrameworkEnum } from './enum/amplify.enum';
 
 @Injectable()
 export class AmplifyService {
@@ -42,6 +46,8 @@ export class AmplifyService {
   constructor(
     private prismaService: PrismaService,
     private configService: ConfigService,
+    private githubService: GithubService,
+    private openaiService: OpenaiService,
   ) {
     this.client = new AmplifyClient({
       region: configService.get('aws.region'),
@@ -52,8 +58,106 @@ export class AmplifyService {
     input.platform = AmplifyApplicationTypeMapping[framework];
   }
 
-  private addAmplifyBuildSpec(input: CreateAppCommandInput, framework: string) {
-    input.buildSpec = AmplifyBuildSpecMapping[framework];
+  private async addAmplifyBuildSpec(
+    input: CreateAppCommandInput,
+    framework: string,
+    repository: Repository,
+    userId: number,
+  ) {
+    const buildSpecOption = {
+      framework: AmplifyFrameworkMapping[framework],
+      exampleBuildSpec: AmplifyBuildSpecMapping[framework],
+    };
+
+    const packageJson = await this.githubService.getFileContent(
+      ConfigFilesMapping['PACKAGE_JSON'],
+      repository.name,
+      repository.owner,
+      repository.branch,
+      userId,
+    );
+
+    if (packageJson) buildSpecOption['packageJson'] = packageJson;
+
+    const viteConfig = await this.githubService.getFileContent(
+      ConfigFilesMapping['VITE_CONFIG'],
+      repository.name,
+      repository.owner,
+      repository.branch,
+      userId,
+    );
+
+    if (viteConfig) buildSpecOption['viteConfig'] = viteConfig;
+
+    const webpackConfig = await this.githubService.getFileContent(
+      ConfigFilesMapping['WEBPACK_CONFIG'],
+      repository.name,
+      repository.owner,
+      repository.branch,
+      userId,
+    );
+
+    if (webpackConfig) buildSpecOption['webpackConfig'] = webpackConfig;
+
+    switch (framework) {
+      case AmplifyFrameworkEnum.NEXT: {
+        const nextConfig = await this.githubService.getFileContent(
+          ConfigFilesMapping['NEXT_CONFIG'],
+          repository.name,
+          repository.owner,
+          repository.branch,
+          userId,
+        );
+
+        if (nextConfig) buildSpecOption['nextConfig'] = nextConfig;
+        break;
+      }
+      case AmplifyFrameworkEnum.NUXT: {
+        const nuxtConfig = await this.githubService.getFileContent(
+          ConfigFilesMapping['NUXT_CONFIG'],
+          repository.name,
+          repository.owner,
+          repository.branch,
+          userId,
+        );
+
+        if (nuxtConfig) buildSpecOption['nuxtConfig'] = nuxtConfig;
+        break;
+      }
+      case AmplifyFrameworkEnum.ANGULAR: {
+        const angularConfig = await this.githubService.getFileContent(
+          ConfigFilesMapping['ANGULAR_CONFIG'],
+          repository.name,
+          repository.owner,
+          repository.branch,
+          userId,
+        );
+
+        if (angularConfig) buildSpecOption['angularConfig'] = angularConfig;
+        break;
+      }
+      case AmplifyFrameworkEnum.SVELTE: {
+        const svelteConfig = await this.githubService.getFileContent(
+          ConfigFilesMapping['SVELTE_CONFIG'],
+          repository.name,
+          repository.owner,
+          repository.branch,
+          userId,
+        );
+
+        if (svelteConfig) buildSpecOption['svelteConfig'] = svelteConfig;
+        break;
+      }
+      default: {
+        break;
+      }
+    }
+
+    const buildspec = await this.openaiService.generateAmplifyBuildSpec(
+      buildSpecOption,
+    );
+
+    input.buildSpec = buildspec;
   }
 
   private async sendAwsCommand<TInput, TOutput>(
@@ -66,11 +170,12 @@ export class AmplifyService {
     return response as TOutput;
   }
 
-  private buildCreateAppInput(
+  private async buildCreateAppInput(
     dto: CreateDeploymentDto,
     repository: Repository,
     accessToken: string,
-  ): CreateAppCommandInput {
+    userId: number,
+  ): Promise<CreateAppCommandInput> {
     const input = {
       name: dto.subdomain,
       repository: repository.url,
@@ -80,7 +185,7 @@ export class AmplifyService {
     };
 
     this.addAmplifyPlatform(input, dto.framework);
-    this.addAmplifyBuildSpec(input, dto.framework);
+    await this.addAmplifyBuildSpec(input, dto.framework, repository, userId);
 
     return input;
   }
@@ -204,11 +309,13 @@ export class AmplifyService {
     accessToken: string,
     deploymentId: number,
     environmentId: number,
+    userId: number,
   ): Promise<void> {
-    const createAppInput = this.buildCreateAppInput(
+    const createAppInput = await this.buildCreateAppInput(
       dto,
       repository,
       accessToken,
+      userId,
     );
     const appData = await this.createAmplifyApp(createAppInput);
 

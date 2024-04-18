@@ -29,6 +29,10 @@ export class CreateDeploymentDto {
 
   @IsString()
   @ApiProperty({ type: String })
+  repositoryOwner: string;
+
+  @IsString()
+  @ApiProperty({ type: String })
   subdomain: string;
 
   @ApiProperty({ type: Object, additionalProperties: { type: 'string' } })
