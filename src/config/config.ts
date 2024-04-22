@@ -32,6 +32,10 @@ export default () => ({
   },
   aws: {
     region: process.env.AWS_REGION,
+    sqs: {
+      queueUrl: process.env.AWS_SQS_QUEUE_URL,
+      queueName: process.env.AWS_SQS_QUEUE_NAME,
+    },
   },
   openai: {
     apiKey: process.env.OPENAI_API_KEY,

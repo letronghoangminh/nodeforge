@@ -21,6 +21,7 @@ import {
 import { PlainToInstance } from 'src/helpers/helpers';
 import { GithubService } from 'src/github/github.service';
 import { OpenaiService } from 'src/openai/openai.service';
+import { EcsService } from 'src/ecs/ecs.service';
 
 @Injectable()
 export class DeploymentService {
@@ -29,6 +30,7 @@ export class DeploymentService {
     private amplifyService: AmplifyService,
     private githubService: GithubService,
     private openaiService: OpenaiService,
+    private ecsService: EcsService,
   ) {}
 
   async checkSubdomain(subdomain: string) {
@@ -324,6 +326,14 @@ export class DeploymentService {
           deployment.id,
           environment.id,
           user.id,
+        );
+      else if (dto.type === DeploymentType.BACKEND)
+        await this.ecsService.createNewDeployment(
+          dto,
+          repository,
+          accessToken,
+          deployment.id,
+          environment.id,
         );
     } catch (error) {
       console.log(error);

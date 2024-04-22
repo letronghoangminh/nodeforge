@@ -29,6 +29,18 @@ module "vpc" {
   public_subnets     = local.public_subnets
 }
 
+module "ecr" {
+  source = "../modules/aws/ecr"
+
+  name = "${local.name}-ecs"
+}
+
+module "sqs" {
+  source          = "../modules/aws/sqs"
+  name            = "${local.name}-ecs"
+  environment     = local.environment
+}
+
 # module "alb" {
 #   source = "../modules/aws/alb"
 

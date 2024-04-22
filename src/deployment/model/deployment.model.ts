@@ -64,6 +64,10 @@ export class DeploymentModel {
   name: string;
 
   @Expose()
+  @ApiProperty({ type: String })
+  reason: string;
+
+  @Expose()
   @ApiProperty({ type: Date })
   createdAt: Date;
 

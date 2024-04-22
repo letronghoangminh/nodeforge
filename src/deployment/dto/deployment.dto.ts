@@ -1,5 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsIn, IsNumber, IsString } from 'class-validator';
+import { IsIn, IsNumber, IsString, Matches } from 'class-validator';
 
 export class CreateDeploymentDto {
   @IsString()
@@ -13,6 +13,9 @@ export class CreateDeploymentDto {
 
   @IsString()
   @ApiProperty({ type: String })
+  @Matches(/^[a-zA-Z0-9\-]+$/, {
+    message: 'Name must contain only alphabets, numbers, and dashes (-)',
+  })
   name: string;
 
   @IsString()

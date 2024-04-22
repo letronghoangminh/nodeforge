@@ -4,9 +4,15 @@ import { NestFactory } from '@nestjs/core';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import { AppModule } from './app.module';
 import { RawBodyMiddleware } from './helpers/middlewares';
+import { EcsModule } from './ecs/ecs.module';
 
 async function bootstrap() {
-  const app = await NestFactory.create(AppModule);
+  let appModule: any = AppModule;
+
+  if (process.env.WORKER_ENABLE) appModule = EcsModule;
+
+  const app = await NestFactory.create(appModule);
+
   app.setGlobalPrefix('api');
   const configService = app.get(ConfigService);
 

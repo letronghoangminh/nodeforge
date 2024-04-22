@@ -88,6 +88,7 @@ model Deployment {
   framework String
   status    DeploymentStatus @default(PENDING)
   name      String
+  reason    String?
 
   createdAt DateTime @default(now()) @db.DateTime(0)
   updatedAt DateTime @default(now()) @updatedAt @db.DateTime(0)

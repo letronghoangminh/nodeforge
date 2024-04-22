@@ -21,6 +21,7 @@
   },
   "dependencies": {
     "@aws-sdk/client-amplify": "^3.554.0",
+    "@aws-sdk/client-sqs": "^3.556.0",
     "@nestjs-modules/mailer": "^1.8.1",
     "@nestjs/common": "^9.0.0",
     "@nestjs/config": "^2.3.1",
@@ -47,6 +48,7 @@
     "passport-local": "^1.0.0",
     "reflect-metadata": "^0.1.13",
     "rxjs": "^7.2.0",
+    "sqs-consumer": "^9.1.0",
     "stripe": "^15.0.0"
   },
   "devDependencies": {
