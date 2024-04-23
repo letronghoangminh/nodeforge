@@ -36,6 +36,22 @@ export default () => ({
       queueUrl: process.env.AWS_SQS_QUEUE_URL,
       queueName: process.env.AWS_SQS_QUEUE_NAME,
     },
+    ecs: {
+      clusterName: process.env.AWS_ECS_CLUSTER_NAME || 'nodeforge-cluster',
+    },
+    vpc: {
+      vpcId: process.env.AWS_VPC_ID,
+      subnetIds: process.env.AWS_VPC_SUBNET_IDS || '',
+      secgroupIds: process.env.AWS_VPC_SECGROUP_IDS || '',
+    },
+    alb: {
+      dnsName: process.env.AWS_ALB_DNS_NAME,
+      zoneId: process.env.AWS_ALB_ZONE_ID,
+      listenerArn: process.env.AWS_ALB_LISTENER_ARN,
+    },
+    r53: {
+      zoneId: process.env.AWS_R53_ZONE_ID,
+    },
   },
   openai: {
     apiKey: process.env.OPENAI_API_KEY,

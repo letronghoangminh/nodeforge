@@ -121,7 +121,7 @@ model AmplifyConfiguration {
   appId            String  @unique
   webhookUrl       String?
   subdomain        String
-  productionBranch String @default("main")
+  productionBranch String  @default("main")
 
   createdAt DateTime @default(now()) @db.DateTime(0)
   updatedAt DateTime @default(now()) @updatedAt @db.DateTime(0)
@@ -136,13 +136,13 @@ model AmplifyConfiguration {
 }
 
 model ECSConfiguration {
-  id               Int    @id @default(autoincrement())
-  serviceName      String
-  cpu              String
-  memory           String
-  manifest         Json   @default("{}")
-  dockerRepository String
-  subdomain        String
+  id          Int    @id @default(autoincrement())
+  serviceName String
+  cpu         String
+  memory      String
+  manifest    Json   @default("{}")
+  dockerImage String
+  subdomain   String
 
   createdAt DateTime @default(now()) @db.DateTime(0)
   updatedAt DateTime @default(now()) @updatedAt @db.DateTime(0)
