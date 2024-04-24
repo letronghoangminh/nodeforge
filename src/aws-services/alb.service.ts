@@ -24,7 +24,7 @@ export class AlbService extends AwsService {
     });
   }
 
-  private async buildCreateTargetGroupInput(
+  async buildCreateTargetGroupInput(
     dto: CreateDeploymentDto,
   ): Promise<CreateTargetGroupCommandInput> {
     const input = {
