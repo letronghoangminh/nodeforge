@@ -4,12 +4,12 @@ import { NestFactory } from '@nestjs/core';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import { AppModule } from './app.module';
 import { RawBodyMiddleware } from './helpers/middlewares';
-import { EcsModule } from './ecs/ecs.module';
+import { BackendModule } from './backend/backend.module';
 
 async function bootstrap() {
   let appModule: any = AppModule;
 
-  if (process.env.WORKER_ENABLE) appModule = EcsModule;
+  if (process.env.WORKER_ENABLE) appModule = BackendModule;
 
   const app = await NestFactory.create(appModule);
 

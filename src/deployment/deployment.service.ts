@@ -10,7 +10,7 @@ import {
   UpdateEnvironmentDto,
 } from './dto/deployment.dto';
 import { DeploymentModel, EnvironmentModel } from './model/deployment.model';
-import { AmplifyService } from 'src/amplify/amplify.service';
+import { FrontendService } from 'src/frontend/frontend.service';
 import {
   DeploymentStatus,
   DeploymentType,
@@ -21,16 +21,16 @@ import {
 import { PlainToInstance } from 'src/helpers/helpers';
 import { GithubService } from 'src/github/github.service';
 import { OpenaiService } from 'src/openai/openai.service';
-import { EcsService } from 'src/ecs/ecs.service';
+import { BackendService } from 'src/backend/backend.service';
 
 @Injectable()
 export class DeploymentService {
   constructor(
     private prismaService: PrismaService,
-    private amplifyService: AmplifyService,
+    private frontendService: FrontendService,
     private githubService: GithubService,
     private openaiService: OpenaiService,
-    private ecsService: EcsService,
+    private backendService: BackendService,
   ) {}
 
   async checkSubdomain(subdomain: string) {
@@ -276,7 +276,7 @@ export class DeploymentService {
     if (!deployment) throw new NotFoundException('No deployment found');
 
     if (deployment.AmplifyConfiguration) {
-      await this.amplifyService.getDeploymentLogs(
+      await this.frontendService.getDeploymentLogs(
         deployment.AmplifyConfiguration.appId,
       );
     }
@@ -319,7 +319,7 @@ export class DeploymentService {
 
     try {
       if (dto.type === DeploymentType.FRONTEND)
-        await this.amplifyService.createNewDeployment(
+        await this.frontendService.createNewDeployment(
           dto,
           repository,
           accessToken,
@@ -328,7 +328,7 @@ export class DeploymentService {
           user.id,
         );
       else if (dto.type === DeploymentType.BACKEND)
-        await this.ecsService.createNewDeployment(
+        await this.backendService.createNewDeployment(
           dto,
           repository,
           accessToken,
@@ -388,7 +388,7 @@ export class DeploymentService {
 
     try {
       if (deployment.type === DeploymentType.FRONTEND)
-        await this.amplifyService.deleteDeployment(
+        await this.frontendService.deleteDeployment(
           deployment.AmplifyConfiguration.appId,
         );
     } catch (error) {

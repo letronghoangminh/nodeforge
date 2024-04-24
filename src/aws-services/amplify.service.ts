@@ -1,6 +1,3 @@
-import { Injectable } from '@nestjs/common';
-import { CreateDeploymentDto } from 'src/deployment/dto/deployment.dto';
-import { PrismaService } from 'src/prisma/prisma.service';
 import {
   AmplifyClient,
   CreateAppCommand,
@@ -27,38 +24,39 @@ import {
   UpdateAppCommandInput,
   UpdateAppCommandOutput,
 } from '@aws-sdk/client-amplify';
-import { Repository } from '@prisma/client';
+import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
+import { Repository } from '@prisma/client';
+import { CreateDeploymentDto } from 'src/deployment/dto/deployment.dto';
+import { AmplifyFrameworkEnum } from 'src/frontend/enum/frontend.enum';
 import {
   AmplifyApplicationTypeMapping,
   AmplifyBuildSpecMapping,
   AmplifyFrameworkMapping,
   ConfigFilesMapping,
-} from './mapping/amplify.mapping';
+} from 'src/frontend/mapping/frontend.mapping';
 import { GithubService } from 'src/github/github.service';
 import { OpenaiService } from 'src/openai/openai.service';
-import { AmplifyFrameworkEnum } from './enum/amplify.enum';
+import { AwsService } from './base.class';
 
 @Injectable()
-export class AmplifyService {
-  private client: AmplifyClient;
-
+export class AmplifyService extends AwsService {
   constructor(
-    private prismaService: PrismaService,
     private configService: ConfigService,
     private githubService: GithubService,
     private openaiService: OpenaiService,
   ) {
+    super();
     this.client = new AmplifyClient({
       region: configService.get('aws.region'),
     });
   }
 
-  private addAmplifyPlatform(input: CreateAppCommandInput, framework: string) {
+  addAmplifyPlatform(input: CreateAppCommandInput, framework: string) {
     input.platform = AmplifyApplicationTypeMapping[framework];
   }
 
-  private async addAmplifyBuildSpec(
+  async addAmplifyBuildSpec(
     input: CreateAppCommandInput,
     framework: string,
     repository: Repository,
@@ -160,17 +158,7 @@ export class AmplifyService {
     input.buildSpec = buildspec;
   }
 
-  private async sendAwsCommand<TInput, TOutput>(
-    command: new (input: TInput) => any,
-    input: TInput,
-  ): Promise<TOutput> {
-    const commandInstance = new command(input);
-    const response = await this.client.send(commandInstance);
-
-    return response as TOutput;
-  }
-
-  private async buildCreateAppInput(
+  async buildCreateAppInput(
     dto: CreateDeploymentDto,
     repository: Repository,
     accessToken: string,
@@ -190,7 +178,7 @@ export class AmplifyService {
     return input;
   }
 
-  private async createAmplifyApp(
+  async createAmplifyApp(
     input: CreateAppCommandInput,
   ): Promise<CreateAppCommandOutput> {
     return this.sendAwsCommand<CreateAppCommandInput, CreateAppCommandOutput>(
@@ -199,7 +187,7 @@ export class AmplifyService {
     );
   }
 
-  private buildCreateBranchInput(
+  buildCreateBranchInput(
     dto: CreateDeploymentDto,
     appId: string,
   ): CreateBranchCommandInput {
@@ -212,7 +200,7 @@ export class AmplifyService {
     };
   }
 
-  private async createAmplifyBranch(
+  async createAmplifyBranch(
     input: CreateBranchCommandInput,
   ): Promise<CreateBranchCommandOutput> {
     return this.sendAwsCommand<
@@ -221,7 +209,7 @@ export class AmplifyService {
     >(CreateBranchCommand, input);
   }
 
-  private buildStartDeploymentInput(
+  buildStartDeploymentInput(
     branch: string,
     appId: string,
   ): StartJobCommandInput {
@@ -232,7 +220,7 @@ export class AmplifyService {
     };
   }
 
-  private async startDeployment(
+  async startDeployment(
     input: StartJobCommandInput,
   ): Promise<StartJobCommandOutput> {
     return this.sendAwsCommand<StartJobCommandInput, StartJobCommandOutput>(
@@ -241,7 +229,7 @@ export class AmplifyService {
     );
   }
 
-  private buildCreateDomainAssociationInput(
+  buildCreateDomainAssociationInput(
     dto: CreateDeploymentDto,
     appId: string,
   ): CreateDomainAssociationCommandInput {
@@ -260,7 +248,7 @@ export class AmplifyService {
     };
   }
 
-  private async createDomainAssociation(
+  async createDomainAssociation(
     input: CreateDomainAssociationCommandInput,
   ): Promise<CreateDomainAssociationCommandOutput> {
     return this.sendAwsCommand<
@@ -269,14 +257,14 @@ export class AmplifyService {
     >(CreateDomainAssociationCommand, input);
   }
 
-  private buildGetLogsInput(appId: string): GenerateAccessLogsCommandInput {
+  buildGetLogsInput(appId: string): GenerateAccessLogsCommandInput {
     return {
       appId: appId,
       domainName: this.configService.get('app.domain'),
     };
   }
 
-  private async getLogs(
+  async getLogs(
     input: GenerateAccessLogsCommandInput,
   ): Promise<GenerateAccessLogsCommandOutput> {
     return this.sendAwsCommand<
@@ -285,7 +273,7 @@ export class AmplifyService {
     >(GenerateAccessLogsCommand, input);
   }
 
-  private async deleteApp(
+  async deleteApp(
     input: DeleteAppCommandInput,
   ): Promise<DeleteAppCommandOutput> {
     return this.sendAwsCommand<DeleteAppCommandInput, DeleteAppCommandOutput>(
@@ -294,92 +282,12 @@ export class AmplifyService {
     );
   }
 
-  private async updateApp(
+  async updateApp(
     input: UpdateAppCommandInput,
   ): Promise<UpdateAppCommandOutput> {
     return this.sendAwsCommand<UpdateAppCommandInput, UpdateAppCommandOutput>(
       UpdateAppCommand,
       input,
     );
-  }
-
-  async createNewDeployment(
-    dto: CreateDeploymentDto,
-    repository: Repository,
-    accessToken: string,
-    deploymentId: number,
-    environmentId: number,
-    userId: number,
-  ): Promise<void> {
-    const createAppInput = await this.buildCreateAppInput(
-      dto,
-      repository,
-      accessToken,
-      userId,
-    );
-    const appData = await this.createAmplifyApp(createAppInput);
-
-    const createBranchInput = this.buildCreateBranchInput(
-      dto,
-      appData.app.appId,
-    );
-    await this.createAmplifyBranch(createBranchInput);
-
-    const startDeploymentInput = this.buildStartDeploymentInput(
-      dto.repositoryBranch,
-      appData.app.appId,
-    );
-    await this.startDeployment(startDeploymentInput);
-
-    const createDomainAssociationInput = this.buildCreateDomainAssociationInput(
-      dto,
-      appData.app.appId,
-    );
-    await this.createDomainAssociation(createDomainAssociationInput);
-
-    await this.prismaService.amplifyConfiguration.create({
-      data: {
-        deploymentId,
-        appId: appData.app.appId,
-        subdomain: dto.subdomain,
-        environmentId: environmentId,
-        productionBranch: dto.repositoryBranch,
-      },
-    });
-  }
-
-  async deleteDeployment(appId: string): Promise<void> {
-    const deleteAppInput = {
-      appId: appId,
-    };
-    await this.deleteApp(deleteAppInput);
-
-    await this.prismaService.amplifyConfiguration.delete({
-      where: {
-        appId: appId,
-      },
-    });
-  }
-
-  async updateEnvironment(
-    appId: string,
-    envVars: Record<string, string>,
-    branch: string,
-  ): Promise<void> {
-    const updateAppInput = {
-      appId: appId,
-      environmentVariables: envVars,
-    };
-    await this.updateApp(updateAppInput);
-
-    const startDeploymentInput = this.buildStartDeploymentInput(branch, appId);
-    await this.startDeployment(startDeploymentInput);
-  }
-
-  async getDeploymentLogs(appId: string): Promise<void> {
-    const input = this.buildGetLogsInput(appId);
-    const logs = await this.getLogs(input);
-
-    console.log(logs.logUrl);
   }
 }

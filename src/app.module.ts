@@ -9,8 +9,8 @@ import { GithubModule } from './github/github.module';
 import { SubscriptionModule } from './subscription/subscription.module';
 import { DeploymentModule } from './deployment/deployment.module';
 import { OpenaiModule } from './openai/openai.module';
-import { AmplifyModule } from './amplify/amplify.module';
-import { EcsModule } from './ecs/ecs.module';
+import { FrontendModule } from './frontend/frontend.module';
+import { BackendModule } from './backend/backend.module';
 
 @Module({
   imports: [
@@ -27,8 +27,8 @@ import { EcsModule } from './ecs/ecs.module';
     SubscriptionModule,
     DeploymentModule,
     OpenaiModule,
-    AmplifyModule,
-    EcsModule,
+    FrontendModule,
+    BackendModule,
   ],
 })
 export class AppModule {}

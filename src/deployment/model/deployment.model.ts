@@ -1,7 +1,7 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { Expose, Transform } from 'class-transformer';
-import { AmplifyConfigurationModel } from 'src/amplify/model/amplify.model';
-import { ECSConfigurationModel } from 'src/ecs/model/ecs.model';
+import { AmplifyConfigurationModel } from 'src/frontend/model/frontend.model';
+import { ECSConfigurationModel } from 'src/backend/model/backend.model';
 import { PlainToInstance } from 'src/helpers/helpers';
 
 export class RepositoryModel {
