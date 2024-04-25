@@ -20,9 +20,9 @@ export class R53Service extends AwsService {
     });
   }
 
-  async buildCreateR53RecordInput(
+  private buildCreateR53RecordInput(
     dto: CreateDeploymentDto,
-  ): Promise<ChangeResourceRecordSetsCommandInput> {
+  ): ChangeResourceRecordSetsCommandInput {
     const input = {
       HostedZoneId: this.configService.get('aws.r53.zoneId'),
       ChangeBatch: {
@@ -34,7 +34,7 @@ export class R53Service extends AwsService {
               Type: RRType.A,
               AliasTarget: {
                 HostedZoneId: this.configService.get('aws.alb.zoneId'),
-                DNSName: this.configService.get('aws.alb.zoneId'),
+                DNSName: this.configService.get('aws.alb.dnsName'),
                 EvaluateTargetHealth: true,
               },
             },
@@ -46,12 +46,18 @@ export class R53Service extends AwsService {
     return input;
   }
 
-  async createR53Record(
+  private async createR53Record(
     input: ChangeResourceRecordSetsCommandInput,
   ): Promise<ChangeResourceRecordSetsCommandOutput> {
     return this.sendAwsCommand<
       ChangeResourceRecordSetsCommandInput,
       ChangeResourceRecordSetsCommandOutput
     >(ChangeResourceRecordSetsCommand, input);
+  }
+
+  async createRoute53RecordForECS(dto: CreateDeploymentDto): Promise<void> {
+    const createR53RecordInput = this.buildCreateR53RecordInput(dto);
+
+    await this.createR53Record(createR53RecordInput);
   }
 }

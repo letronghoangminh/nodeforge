@@ -25,7 +25,7 @@ export class Ec2Service extends AwsService {
     });
   }
 
-  buildCreateSecurityGroupInput(
+  private buildCreateSecurityGroupInput(
     dto: CreateDeploymentDto,
   ): CreateSecurityGroupCommandInput {
     const input = {
@@ -37,7 +37,7 @@ export class Ec2Service extends AwsService {
     return input;
   }
 
-  async createSecurityGroup(
+  private async createSecurityGroup(
     input: CreateSecurityGroupCommandInput,
   ): Promise<CreateSecurityGroupCommandOutput> {
     return this.sendAwsCommand<
@@ -46,23 +46,29 @@ export class Ec2Service extends AwsService {
     >(CreateSecurityGroupCommand, input);
   }
 
-  buildCreateIngressRuleInput(
+  private buildCreateIngressRuleInput(
     secgroupId: string,
   ): AuthorizeSecurityGroupIngressCommandInput {
-    const albSecgroupName = this.configService.get('aws.alb.secgroupName');
-
     const input = {
-      FromPort: 8000,
-      ToPort: 8000,
-      IpProtocol: Protocol.tcp,
-      SourceSecurityGroupName: albSecgroupName,
       GroupId: secgroupId,
+      IpPermissions: [
+        {
+          FromPort: 8000,
+          ToPort: 8000,
+          IpProtocol: Protocol.tcp,
+          UserIdGroupPairs: [
+            {
+              GroupId: this.configService.get('aws.alb.secgroupId'),
+            },
+          ],
+        },
+      ],
     };
 
     return input;
   }
 
-  async createIngressRule(
+  private async createIngressRule(
     input: AuthorizeSecurityGroupIngressCommandInput,
   ): Promise<AuthorizeSecurityGroupIngressCommandOutput> {
     return this.sendAwsCommand<
@@ -71,26 +77,46 @@ export class Ec2Service extends AwsService {
     >(AuthorizeSecurityGroupIngressCommand, input);
   }
 
-  buildCreateEgressRuleInput(
-    secgroupId: string,
-  ): AuthorizeSecurityGroupEgressCommandInput {
-    const input = {
-      GroupId: secgroupId,
-      FromPort: 0,
-      ToPort: 0,
-      CidrIp: '0.0.0.0/0',
-      IpProtocol: Protocol.tcp,
-    };
+  // private buildCreateEgressRuleInput(
+  //   secgroupId: string,
+  // ): AuthorizeSecurityGroupEgressCommandInput {
+  //   const input = {
+  //     GroupId: secgroupId,
+  //     FromPort: 0,
+  //     ToPort: 0,
+  //     CidrIp: '0.0.0.0/0',
+  //     IpProtocol: Protocol.tcp,
+  //   };
 
-    return input;
-  }
+  //   return input;
+  // }
 
-  async createEgressRule(
-    input: AuthorizeSecurityGroupEgressCommandInput,
-  ): Promise<AuthorizeSecurityGroupIngressCommandOutput> {
-    return this.sendAwsCommand<
-      AuthorizeSecurityGroupEgressCommandInput,
-      AuthorizeSecurityGroupEgressCommandOutput
-    >(AuthorizeSecurityGroupEgressCommand, input);
+  // private async createEgressRule(
+  //   input: AuthorizeSecurityGroupEgressCommandInput,
+  // ): Promise<AuthorizeSecurityGroupIngressCommandOutput> {
+  //   return this.sendAwsCommand<
+  //     AuthorizeSecurityGroupEgressCommandInput,
+  //     AuthorizeSecurityGroupEgressCommandOutput
+  //   >(AuthorizeSecurityGroupEgressCommand, input);
+  // }
+
+  async createSecurityGroupForECS(dto: CreateDeploymentDto): Promise<string> {
+    const createSecurityGroupInput = this.buildCreateSecurityGroupInput(dto);
+
+    const secgroupResponse = await this.createSecurityGroup(
+      createSecurityGroupInput,
+    );
+
+    const secgroupId = secgroupResponse.GroupId;
+
+    const createIngressRuleInput = this.buildCreateIngressRuleInput(secgroupId);
+
+    await this.createIngressRule(createIngressRuleInput);
+
+    // const createEgressRuleInput = this.buildCreateEgressRuleInput(secgroupId);
+
+    // await this.createEgressRule(createEgressRuleInput);
+
+    return secgroupId;
   }
 }

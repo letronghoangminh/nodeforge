@@ -9,6 +9,8 @@ import { AlbService } from 'src/aws-services/alb.service';
 import { R53Service } from 'src/aws-services/r53.service';
 import { SqsService } from 'src/aws-services/sqs.service';
 import { DockerService } from 'src/docker/docker.service';
+import { Ec2Service } from 'src/aws-services/ec2.service';
+import { Exception } from 'handlebars';
 
 @Injectable()
 export class BackendService {
@@ -19,6 +21,7 @@ export class BackendService {
     private albService: AlbService,
     private r53Service: R53Service,
     private sqsService: SqsService,
+    private ec2Service: Ec2Service,
     private dockerService: DockerService,
   ) {}
 
@@ -32,9 +35,6 @@ export class BackendService {
     const consumer = Consumer.create({
       queueUrl: this.configService.get('aws.sqs.queueUrl'),
       handleMessage: async (message) => {
-        console.log(
-          `SQS - Received message from ${queueName} - Message: ${message.Body}`,
-        );
         await this.messageHandler({
           body: message.Body,
           queueName: queueName,
@@ -51,47 +51,56 @@ export class BackendService {
     body: any;
     queueName: string;
   }): Promise<void> {
-    console.log(
-      `SQS - Message Handler - body: ${options.body}, queueName:  ${options.queueName}`,
-    );
-    options.body = JSON.parse(options.body);
-    const environmentId = options.body.environmentId as number;
-    const deploymentId = options.body.deploymentId as number;
-    const repository = options.body.repository as Repository;
-    const accessToken = options.body.accessToken as string;
-    const createDeploymentData = options.body
-      .createDeploymentData as CreateDeploymentDto;
+    try {
+      console.log(
+        `SQS - Message Handler - body: ${options.body}, queueName:  ${options.queueName}`,
+      );
+      options.body = JSON.parse(options.body);
+      const environmentId = options.body.environmentId as number;
+      const deploymentId = options.body.deploymentId as number;
+      const repository = options.body.repository as Repository;
+      const accessToken = options.body.accessToken as string;
+      const createDeploymentData = options.body
+        .createDeploymentData as CreateDeploymentDto;
 
-    // WORKER:
-    //  - Build docker image
-    //  - Create ECS Service, task definition
-    //  - Create R53 record, target group, ALB listern rule
-    //  - Update deployment record
+      // WORKER:
+      //  - Build docker image
+      //  - Create SecGroup, R53 record (IAM?)
+      //  - Create target group, ALB listern rule
+      //  - Create ECS Service, task definition
+      //  - Update deployment record
 
-    const dockerImage = await this.dockerService.buildDockerImage(
-      createDeploymentData,
-      repository,
-      accessToken,
-    );
+      const dockerImage = await this.dockerService.buildDockerImage(
+        createDeploymentData,
+        repository,
+        accessToken,
+      );
 
-    await this.deployBackendService(
-      createDeploymentData,
-      environmentId,
-      dockerImage,
-    );
+      await this.deployBackendService(
+        createDeploymentData,
+        environmentId,
+        dockerImage,
+      );
+    } catch (error) {
+      console.log(error);
+    }
   }
 
   private async deployBackendService(
-    createDeploymentData: CreateDeploymentDto,
+    dto: CreateDeploymentDto,
     environmentId: number,
     dockerImage: string,
   ): Promise<void> {
-    const registerTaskDefinitionInput =
-      await this.ecsService.buildRegisterTaskDefinitionInput(
-        createDeploymentData,
-        dockerImage,
-        environmentId,
-      );
+    const secgroupId = await this.ec2Service.createSecurityGroupForECS(dto);
+
+    await this.r53Service.createRoute53RecordForECS(dto);
+
+    // const registerTaskDefinitionInput =
+    //   await this.ecsService.buildRegisterTaskDefinitionInput(
+    //     createDeploymentData,
+    //     dockerImage,
+    //     environmentId,
+    //   );
     // const taskDefReseponse = await this.ecsService.registerTaskDefinition(
     //   registerTaskDefinitionInput,
     // );

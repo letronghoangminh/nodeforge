@@ -10,6 +10,7 @@ import { AlbService } from 'src/aws-services/alb.service';
 import { R53Service } from 'src/aws-services/r53.service';
 import { SqsService } from 'src/aws-services/sqs.service';
 import { DockerService } from 'src/docker/docker.service';
+import { Ec2Service } from 'src/aws-services/ec2.service';
 
 @Module({
   providers: [
@@ -19,6 +20,7 @@ import { DockerService } from 'src/docker/docker.service';
     R53Service,
     SqsService,
     DockerService,
+    Ec2Service,
   ],
   exports: [BackendService],
   imports: [

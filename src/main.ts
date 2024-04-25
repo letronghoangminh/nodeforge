@@ -13,6 +13,10 @@ async function bootstrap() {
 
   const app = await NestFactory.create(appModule);
 
+  app.use('/health', (_req, res) => {
+    res.sendStatus(200);
+  });
+
   app.setGlobalPrefix('api');
   const configService = app.get(ConfigService);
 

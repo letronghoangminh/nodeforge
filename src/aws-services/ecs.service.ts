@@ -90,6 +90,7 @@ export class EcsService extends AwsService {
     dto: CreateDeploymentDto,
     taskDefinitionArn: string,
     targetGroupArn: string,
+    secgroupId: string,
   ): Promise<CreateServiceCommandInput> {
     const input = {
       cluster: this.configService.get('aws.ecs.clusterName'),
@@ -114,9 +115,7 @@ export class EcsService extends AwsService {
           subnets: (
             this.configService.get('aws.vpc.subnetIds') as string
           ).split(','),
-          securityGroups: (
-            this.configService.get('aws.vpc.secgroupIds') as string
-          ).split(','),
+          securityGroups: [secgroupId],
         },
       },
       healthCheckGracePeriodSeconds: 60,

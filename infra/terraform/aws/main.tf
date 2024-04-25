@@ -44,7 +44,7 @@ module "sqs" {
 # module "alb" {
 #   source = "../modules/aws/alb"
 
-#   name                = module.shared.stack_name
+#   name                = local.name
 #   vpc_id              = module.vpc.id
 #   public_subnets      = module.vpc.public_subnets
 #   environment         = local.environment
