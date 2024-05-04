@@ -31,10 +31,12 @@ export class EcsService extends AwsService {
     });
   }
 
-  async buildRegisterTaskDefinitionInput(
+  private async buildRegisterTaskDefinitionInput(
     dto: CreateDeploymentDto,
     dockerImage: string,
     environmentId: number,
+    taskRoleArn: string,
+    taskExecutionRoleArn: string,
   ): Promise<RegisterTaskDefinitionCommandInput> {
     const environment = await this.prismaService.environment.findFirst({
       where: {
@@ -53,8 +55,10 @@ export class EcsService extends AwsService {
       family: `${dto.name}-task`,
       networkMode: NetworkMode.AWSVPC,
       requiresCompatibilities: [Compatibility.FARGATE],
-      cpu: '.25',
+      cpu: '256',
       memory: '512',
+      taskRoleArn: taskRoleArn,
+      executionRoleArn: taskExecutionRoleArn,
       containerDefinitions: [
         {
           name: `${dto.name}-container`,
@@ -77,7 +81,7 @@ export class EcsService extends AwsService {
     return input;
   }
 
-  async registerTaskDefinition(
+  private async registerTaskDefinition(
     input: RegisterTaskDefinitionCommandInput,
   ): Promise<RegisterTaskDefinitionCommandOutput> {
     return this.sendAwsCommand<
@@ -86,12 +90,12 @@ export class EcsService extends AwsService {
     >(RegisterTaskDefinitionCommand, input);
   }
 
-  async buildCreateServiceInput(
+  private buildCreateServiceInput(
     dto: CreateDeploymentDto,
     taskDefinitionArn: string,
     targetGroupArn: string,
     secgroupId: string,
-  ): Promise<CreateServiceCommandInput> {
+  ): CreateServiceCommandInput {
     const input = {
       cluster: this.configService.get('aws.ecs.clusterName'),
       serviceName: dto.name,
@@ -126,12 +130,44 @@ export class EcsService extends AwsService {
     return input;
   }
 
-  async createService(
+  private async createService(
     input: CreateServiceCommandInput,
   ): Promise<CreateServiceCommandOutput> {
     return this.sendAwsCommand<
       CreateServiceCommandInput,
       CreateServiceCommandOutput
     >(CreateServiceCommand, input);
+  }
+
+  async createEcsService(
+    dto: CreateDeploymentDto,
+    dockerImage: string,
+    environmentId: number,
+    targetGroupArn: string,
+    secgroupId: string,
+    taskRoleArn: string,
+    taskExecutionRoleArn: string,
+  ) {
+    const registerTaskDefinitionInput =
+      await this.buildRegisterTaskDefinitionInput(
+        dto,
+        dockerImage,
+        environmentId,
+        taskRoleArn,
+        taskExecutionRoleArn,
+      );
+
+    const taskDefResponse = await this.registerTaskDefinition(
+      registerTaskDefinitionInput,
+    );
+
+    const createServiceInput = this.buildCreateServiceInput(
+      dto,
+      taskDefResponse.taskDefinition.taskDefinitionArn,
+      targetGroupArn,
+      secgroupId,
+    );
+
+    await this.createService(createServiceInput);
   }
 }

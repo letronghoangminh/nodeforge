@@ -24,9 +24,9 @@ export class AlbService extends AwsService {
     });
   }
 
-  async buildCreateTargetGroupInput(
+  private buildCreateTargetGroupInput(
     dto: CreateDeploymentDto,
-  ): Promise<CreateTargetGroupCommandInput> {
+  ): CreateTargetGroupCommandInput {
     const input = {
       Name: `${dto.name}-tg`,
       Port: 8000,
@@ -46,7 +46,7 @@ export class AlbService extends AwsService {
     return input;
   }
 
-  async createTargetGroup(
+  private async createTargetGroup(
     input: CreateTargetGroupCommandInput,
   ): Promise<CreateTargetGroupCommandOutput> {
     return this.sendAwsCommand<
@@ -55,14 +55,15 @@ export class AlbService extends AwsService {
     >(CreateTargetGroupCommand, input);
   }
 
-  async buildCreateListenerRuleInput(
+  private buildCreateListenerRuleInput(
     dnsName: string,
     targetGroupArn: string,
-  ): Promise<CreateRuleCommandInput> {
+  ): CreateRuleCommandInput {
     const input = {
       ListenerArn: this.configService.get('aws.alb.listenerArn'),
       Conditions: [
         {
+          Field: 'host-header',
           HostHeaderConfig: {
             Values: [dnsName],
           },
@@ -80,12 +81,31 @@ export class AlbService extends AwsService {
     return input;
   }
 
-  async createListenerRule(
+  private async createListenerRule(
     input: CreateRuleCommandInput,
   ): Promise<CreateRuleCommandOutput> {
     return this.sendAwsCommand<CreateRuleCommandInput, CreateRuleCommandOutput>(
       CreateRuleCommand,
       input,
     );
+  }
+
+  async createTargetGroupForEcs(dto: CreateDeploymentDto): Promise<string> {
+    const createTargetGroupInput = this.buildCreateTargetGroupInput(dto);
+
+    const targetGroupResponse = await this.createTargetGroup(
+      createTargetGroupInput,
+    );
+
+    const targetGroupArn = targetGroupResponse.TargetGroups[0].TargetGroupArn;
+
+    const createListenerRuleInput = this.buildCreateListenerRuleInput(
+      `${dto.subdomain}.${this.configService.get('app.domain')}`,
+      targetGroupArn,
+    );
+
+    await this.createListenerRule(createListenerRuleInput);
+
+    return targetGroupArn;
   }
 }

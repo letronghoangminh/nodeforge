@@ -10,7 +10,7 @@ import { R53Service } from 'src/aws-services/r53.service';
 import { SqsService } from 'src/aws-services/sqs.service';
 import { DockerService } from 'src/docker/docker.service';
 import { Ec2Service } from 'src/aws-services/ec2.service';
-import { Exception } from 'handlebars';
+import { IamService } from 'src/aws-services/iam.service';
 
 @Injectable()
 export class BackendService {
@@ -22,6 +22,7 @@ export class BackendService {
     private r53Service: R53Service,
     private sqsService: SqsService,
     private ec2Service: Ec2Service,
+    private iamService: IamService,
     private dockerService: DockerService,
   ) {}
 
@@ -95,15 +96,20 @@ export class BackendService {
 
     await this.r53Service.createRoute53RecordForECS(dto);
 
-    // const registerTaskDefinitionInput =
-    //   await this.ecsService.buildRegisterTaskDefinitionInput(
-    //     createDeploymentData,
-    //     dockerImage,
-    //     environmentId,
-    //   );
-    // const taskDefReseponse = await this.ecsService.registerTaskDefinition(
-    //   registerTaskDefinitionInput,
-    // );
+    const targetGroupArn = await this.albService.createTargetGroupForEcs(dto);
+
+    const { taskRoleArn, taskExecutionRoleArn } =
+      await this.iamService.createIamRolesForEcs(dto);
+
+    await this.ecsService.createEcsService(
+      dto,
+      dockerImage,
+      environmentId,
+      targetGroupArn,
+      secgroupId,
+      taskRoleArn,
+      taskExecutionRoleArn,
+    );
   }
 
   async createNewDeployment(
