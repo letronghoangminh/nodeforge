@@ -9,6 +9,12 @@ import {
   CreateTargetGroupCommand,
   CreateTargetGroupCommandInput,
   CreateTargetGroupCommandOutput,
+  DeleteRuleCommand,
+  DeleteRuleCommandInput,
+  DeleteRuleCommandOutput,
+  DeleteTargetGroupCommand,
+  DeleteTargetGroupCommandInput,
+  DeleteTargetGroupCommandOutput,
   ElasticLoadBalancingV2Client,
   ProtocolEnum,
   TargetTypeEnum,
@@ -90,7 +96,47 @@ export class AlbService extends AwsService {
     );
   }
 
-  async createTargetGroupForEcs(dto: CreateDeploymentDto): Promise<string> {
+  private buildDeleteListenerRuleInput(
+    ruleArn: string,
+  ): DeleteRuleCommandInput {
+    const input = {
+      RuleArn: ruleArn,
+    };
+
+    return input;
+  }
+
+  private async deleteListenerRule(
+    input: DeleteRuleCommandInput,
+  ): Promise<DeleteRuleCommandOutput> {
+    return this.sendAwsCommand<DeleteRuleCommandInput, DeleteRuleCommandOutput>(
+      DeleteRuleCommand,
+      input,
+    );
+  }
+
+  private buildDeleteTargetGroupInput(
+    targetGroupArn: string,
+  ): DeleteTargetGroupCommandInput {
+    const input = {
+      TargetGroupArn: targetGroupArn,
+    };
+
+    return input;
+  }
+
+  private async deleteTargetGroup(
+    input: DeleteTargetGroupCommandInput,
+  ): Promise<DeleteTargetGroupCommandOutput> {
+    return this.sendAwsCommand<
+      DeleteTargetGroupCommandInput,
+      DeleteTargetGroupCommandOutput
+    >(DeleteTargetGroupCommand, input);
+  }
+
+  async createTargetGroupForEcs(
+    dto: CreateDeploymentDto,
+  ): Promise<{ listenerRuleArn: string; targetGroupArn: string }> {
     const createTargetGroupInput = this.buildCreateTargetGroupInput(dto);
 
     const targetGroupResponse = await this.createTargetGroup(
@@ -104,8 +150,28 @@ export class AlbService extends AwsService {
       targetGroupArn,
     );
 
-    await this.createListenerRule(createListenerRuleInput);
+    const createListenerRuleResponse = await this.createListenerRule(
+      createListenerRuleInput,
+    );
 
-    return targetGroupArn;
+    return {
+      targetGroupArn,
+      listenerRuleArn: createListenerRuleResponse.Rules[0].RuleArn,
+    };
+  }
+
+  async deleteTargetGroupForEcs(
+    listenerRuleArn: string,
+    targetGroupArn: string,
+  ) {
+    const deleteListenerRuleInput =
+      this.buildDeleteListenerRuleInput(listenerRuleArn);
+
+    await this.deleteListenerRule(deleteListenerRuleInput);
+
+    const deleteTargetGroupInput =
+      this.buildDeleteTargetGroupInput(targetGroupArn);
+
+    await this.deleteTargetGroup(deleteTargetGroupInput);
   }
 }

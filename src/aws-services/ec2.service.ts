@@ -11,6 +11,9 @@ import {
   CreateSecurityGroupCommand,
   CreateSecurityGroupCommandInput,
   CreateSecurityGroupCommandOutput,
+  DeleteSecurityGroupCommand,
+  DeleteSecurityGroupCommandInput,
+  DeleteSecurityGroupCommandOutput,
   EC2Client,
   Protocol,
 } from '@aws-sdk/client-ec2';
@@ -100,6 +103,25 @@ export class Ec2Service extends AwsService {
   //   >(AuthorizeSecurityGroupEgressCommand, input);
   // }
 
+  private buildDeleteSecurityGroupInput(
+    secgroupId: string,
+  ): DeleteSecurityGroupCommandInput {
+    const input = {
+      GroupId: secgroupId,
+    };
+
+    return input;
+  }
+
+  private async deleteSecurityGroup(
+    input: DeleteSecurityGroupCommandInput,
+  ): Promise<DeleteSecurityGroupCommandOutput> {
+    return this.sendAwsCommand<
+      DeleteSecurityGroupCommandInput,
+      DeleteSecurityGroupCommandOutput
+    >(DeleteSecurityGroupCommand, input);
+  }
+
   async createSecurityGroupForECS(dto: CreateDeploymentDto): Promise<string> {
     const createSecurityGroupInput = this.buildCreateSecurityGroupInput(dto);
 
@@ -118,5 +140,12 @@ export class Ec2Service extends AwsService {
     // await this.createEgressRule(createEgressRuleInput);
 
     return secgroupId;
+  }
+
+  async deleteSecurityGroupForECS(secgroupId: string) {
+    const deleteSecuruityGroupInput =
+      this.buildDeleteSecurityGroupInput(secgroupId);
+
+    await this.deleteSecurityGroup(deleteSecuruityGroupInput);
   }
 }

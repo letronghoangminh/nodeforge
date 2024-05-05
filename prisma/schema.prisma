@@ -136,13 +136,15 @@ model AmplifyConfiguration {
 }
 
 model ECSConfiguration {
-  id          Int    @id @default(autoincrement())
-  serviceName String
-  cpu         String
-  memory      String
-  manifest    Json   @default("{}")
-  dockerImage String
-  subdomain   String
+  id              Int    @id @default(autoincrement())
+  serviceName     String
+  cpu             String
+  memory          String
+  dockerImage     String
+  subdomain       String
+  listenerRuleArn String
+  targetGroupArn  String
+  secgroupId      String
 
   createdAt DateTime @default(now()) @db.DateTime(0)
   updatedAt DateTime @default(now()) @updatedAt @db.DateTime(0)

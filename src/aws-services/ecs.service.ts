@@ -7,8 +7,15 @@ import {
   CreateServiceCommand,
   CreateServiceCommandInput,
   CreateServiceCommandOutput,
+  DeleteServiceCommand,
+  DeleteServiceCommandInput,
+  DeleteServiceCommandOutput,
+  DeleteTaskDefinitionsCommand,
+  DeleteTaskDefinitionsCommandInput,
+  DeleteTaskDefinitionsCommandOutput,
   ECSClient,
   LaunchType,
+  LogDriver,
   NetworkMode,
   RegisterTaskDefinitionCommand,
   RegisterTaskDefinitionCommandInput,
@@ -74,6 +81,16 @@ export class EcsService extends AwsService {
           environment: Object.entries(envVars).map(([name, value]) => {
             return { name, value };
           }),
+          logConfiguration: {
+            logDriver: LogDriver.AWSLOGS,
+            options: {
+              'awslogs-group': this.configService.get(
+                'aws.ecs.cloudwatchLogGroup',
+              ),
+              'awslogs-region': this.configService.get('aws.region'),
+              'awslogs-stream-prefix': `${dto.name}`,
+            },
+          },
         },
       ],
     };
@@ -115,7 +132,7 @@ export class EcsService extends AwsService {
       },
       networkConfiguration: {
         awsvpcConfiguration: {
-          assignPublicIp: AssignPublicIp.DISABLED,
+          assignPublicIp: AssignPublicIp.ENABLED,
           subnets: (
             this.configService.get('aws.vpc.subnetIds') as string
           ).split(','),
@@ -137,6 +154,46 @@ export class EcsService extends AwsService {
       CreateServiceCommandInput,
       CreateServiceCommandOutput
     >(CreateServiceCommand, input);
+  }
+
+  private buildDeleteServiceInput(
+    serviceName: string,
+  ): DeleteServiceCommandInput {
+    const input = {
+      cluster: this.configService.get('aws.ecs.clusterName'),
+      service: serviceName,
+      force: true,
+    };
+
+    return input;
+  }
+
+  private async deleteService(
+    input: DeleteServiceCommandInput,
+  ): Promise<DeleteServiceCommandOutput> {
+    return this.sendAwsCommand<
+      DeleteServiceCommandInput,
+      DeleteServiceCommandOutput
+    >(DeleteServiceCommand, input);
+  }
+
+  private buildDeleteTaskDefinitionsInput(
+    taskDefName: string,
+  ): DeleteTaskDefinitionsCommandInput {
+    const input = {
+      taskDefinitions: [taskDefName],
+    };
+
+    return input;
+  }
+
+  private async deleteTaskDefinitions(
+    input: DeleteTaskDefinitionsCommandInput,
+  ): Promise<DeleteTaskDefinitionsCommandOutput> {
+    return this.sendAwsCommand<
+      DeleteTaskDefinitionsCommandInput,
+      DeleteTaskDefinitionsCommandOutput
+    >(DeleteTaskDefinitionsCommand, input);
   }
 
   async createEcsService(
@@ -169,5 +226,17 @@ export class EcsService extends AwsService {
     );
 
     await this.createService(createServiceInput);
+  }
+
+  async deleteEcsService(serviceName: string) {
+    const deleteServiceInput = this.buildDeleteServiceInput(serviceName);
+
+    await this.deleteService(deleteServiceInput);
+
+    const deleteTaskDefinitionsInput = this.buildDeleteTaskDefinitionsInput(
+      `${serviceName}-task`,
+    );
+
+    await this.deleteTaskDefinitions(deleteTaskDefinitionsInput);
   }
 }

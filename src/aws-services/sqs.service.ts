@@ -25,6 +25,7 @@ export class SqsService extends AwsService {
     accessToken: string,
     deploymentId: number,
     environmentId: number,
+    eventType: string,
   ): SendMessageCommandInput {
     const data = {
       createDeploymentData: dto,
@@ -32,6 +33,7 @@ export class SqsService extends AwsService {
       accessToken,
       deploymentId,
       environmentId,
+      eventType,
     };
 
     const input = {

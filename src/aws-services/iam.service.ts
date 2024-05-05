@@ -7,6 +7,12 @@ import {
   CreateRoleCommand,
   CreateRoleCommandInput,
   CreateRoleCommandOutput,
+  DeleteRoleCommand,
+  DeleteRoleCommandInput,
+  DeleteRoleCommandOutput,
+  DetachRolePolicyCommand,
+  DetachRolePolicyCommandInput,
+  DetachRolePolicyCommandOutput,
   IAMClient,
 } from '@aws-sdk/client-iam';
 import { Injectable } from '@nestjs/common';
@@ -72,6 +78,44 @@ export class IamService extends AwsService {
     >(AttachRolePolicyCommand, input);
   }
 
+  private buildDeleteRoleInput(role: string): DeleteRoleCommandInput {
+    const input = {
+      RoleName: role,
+    };
+
+    return input;
+  }
+
+  private async deleteRole(
+    input: DeleteRoleCommandInput,
+  ): Promise<DeleteRoleCommandOutput> {
+    return this.sendAwsCommand<DeleteRoleCommandInput, DeleteRoleCommandOutput>(
+      DeleteRoleCommand,
+      input,
+    );
+  }
+
+  private buildDetachRolePolicyInput(
+    roleName: string,
+    policyArn: string,
+  ): DetachRolePolicyCommandInput {
+    const input = {
+      RoleName: roleName,
+      PolicyArn: policyArn,
+    };
+
+    return input;
+  }
+
+  private async detachRolePolicy(
+    input: DetachRolePolicyCommandInput,
+  ): Promise<DetachRolePolicyCommandOutput> {
+    return this.sendAwsCommand<
+      DetachRolePolicyCommandInput,
+      DetachRolePolicyCommandOutput
+    >(DetachRolePolicyCommand, input);
+  }
+
   async createIamRolesForEcs(
     dto: CreateDeploymentDto,
   ): Promise<{ taskRoleArn: string; taskExecutionRoleArn: string }> {
@@ -100,5 +144,26 @@ export class IamService extends AwsService {
       taskRoleArn: createTaskRoleResponse.Role.Arn,
       taskExecutionRoleArn: createTaskExecutionRoleResponse.Role.Arn,
     };
+  }
+
+  async deleteIamRolesForEcs(serviceName) {
+    const deleteTaskRoleInput = this.buildDeleteRoleInput(
+      `${serviceName}-ecsTaskRole`,
+    );
+
+    await this.deleteRole(deleteTaskRoleInput);
+
+    const detachRolePolicyInput = this.buildDetachRolePolicyInput(
+      `${serviceName}-ecsTaskExecutionRole`,
+      'arn:aws:iam::aws:policy/service-role/AmazonECSTaskExecutionRolePolicy',
+    );
+
+    await this.detachRolePolicy(detachRolePolicyInput);
+
+    const deleteTaskExecutionRoleInput = this.buildDeleteRoleInput(
+      `${serviceName}-ecsTaskExecutionRole`,
+    );
+
+    await this.deleteRole(deleteTaskExecutionRoleInput);
   }
 }

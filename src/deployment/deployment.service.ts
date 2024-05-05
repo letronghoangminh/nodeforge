@@ -327,7 +327,7 @@ export class DeploymentService {
           environment.id,
           user.id,
         );
-      else if (dto.type === DeploymentType.BACKEND)
+      else if (dto.type === DeploymentType.BACKEND) {
         await this.backendService.createNewDeployment(
           dto,
           repository,
@@ -335,6 +335,9 @@ export class DeploymentService {
           deployment.id,
           environment.id,
         );
+
+        status = DeploymentStatus.PENDING as string;
+      }
     } catch (error) {
       console.log(error);
       status = DeploymentStatus.FAILURE;
@@ -391,6 +394,8 @@ export class DeploymentService {
         await this.frontendService.deleteDeployment(
           deployment.AmplifyConfiguration.appId,
         );
+      else if (deployment.type === DeploymentType.BACKEND)
+        await this.backendService.deleteDeployment(deployment.id);
     } catch (error) {
       console.log(error);
       throw new BadRequestException(
