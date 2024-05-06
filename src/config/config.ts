@@ -40,6 +40,10 @@ export default () => ({
       clusterName: process.env.AWS_ECS_CLUSTER_NAME || 'nodeforge-cluster',
       cloudwatchLogGroup: process.env.AWS_ECS_CLOUDWATCH_LOG_GROUP,
     },
+    ecr: {
+      repository: process.env.AWS_ECR_REPOSITORY,
+      endpoint: process.env.AWS_ECR_ENDPOINT,
+    },
     vpc: {
       vpcId: process.env.AWS_VPC_ID,
       subnetIds: process.env.AWS_VPC_SUBNET_IDS || '',

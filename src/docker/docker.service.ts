@@ -1,17 +1,81 @@
 import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { Repository } from '@prisma/client';
+import { execSync } from 'child_process';
+import { mkdirSync, rmSync } from 'fs';
 import { CreateDeploymentDto } from 'src/deployment/dto/deployment.dto';
 
 @Injectable()
 export class DockerService {
   constructor(private configService: ConfigService) {}
 
-  async buildDockerImage(
+  buildDockerImage(
     createDeploymentData: CreateDeploymentDto,
     repository: Repository,
     accessToken: string,
-  ): Promise<string> {
-    return `100117910916.dkr.ecr.ap-southeast-1.amazonaws.com/nodeforge-ecs:${createDeploymentData.name}`;
+  ): string {
+    this.createWorkSpace(createDeploymentData);
+    this.cloneRepository(createDeploymentData, repository, accessToken);
+    this.buildImage(createDeploymentData, repository);
+    this.tagImage(createDeploymentData);
+    this.getRepositoryToken();
+    this.pushImage(createDeploymentData);
+
+    return `${this.configService.get('aws.ecr.repository')}:${
+      createDeploymentData.name
+    }`;
+  }
+
+  private createWorkSpace(createDeploymentData: CreateDeploymentDto) {
+    rmSync(`/tmp/${createDeploymentData.name}`, {
+      recursive: true,
+      force: true,
+    });
+    mkdirSync(`/tmp/${createDeploymentData.name}`);
+  }
+
+  private cloneRepository(
+    createDeploymentData: CreateDeploymentDto,
+    repository: Repository,
+    accessToken: string,
+  ) {
+    execSync(
+      `cd /tmp/${createDeploymentData.name} && git clone https://${accessToken}@github.com/${repository.owner}/${repository.name}`,
+    );
+  }
+
+  private buildImage(
+    createDeploymentData: CreateDeploymentDto,
+    repository: Repository,
+  ) {
+    execSync(
+      `docker buildx build --platform linux/amd64 -t ${createDeploymentData.name} /tmp/${createDeploymentData.name}/${repository.name}`,
+    );
+  }
+
+  private tagImage(createDeploymentData: CreateDeploymentDto) {
+    execSync(
+      `docker tag ${createDeploymentData.name} ${this.configService.get(
+        'aws.ecr.repository',
+      )}:${createDeploymentData.name}`,
+    );
+  }
+
+  private getRepositoryToken() {
+    execSync(
+      `aws ecr get-login-password --region ${this.configService.get(
+        'aws.region',
+      )} | docker login --username AWS --password-stdin ${this.configService.get(
+        'aws.ecr.endpoint',
+      )}`,
+    );
+  }
+
+  private pushImage(createDeploymentData: CreateDeploymentDto) {
+    execSync(
+      `docker push ${this.configService.get('aws.ecr.repository')}:${
+        createDeploymentData.name
+      }`,
+    );
   }
 }

@@ -18,6 +18,7 @@ import {
   Protocol,
 } from '@aws-sdk/client-ec2';
 import { CreateDeploymentDto } from 'src/deployment/dto/deployment.dto';
+import { genRandomString } from 'src/helpers/helpers';
 
 @Injectable()
 export class Ec2Service extends AwsService {
@@ -33,7 +34,7 @@ export class Ec2Service extends AwsService {
   ): CreateSecurityGroupCommandInput {
     const input = {
       Description: 'Allow inbound HTTP traffic to service from ALB only',
-      GroupName: `${dto.name}-sg`,
+      GroupName: `ecs-${dto.name}-sg-${genRandomString(5)}`,
       VpcId: this.configService.get('aws.vpc.vpcId'),
     };
 

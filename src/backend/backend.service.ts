@@ -67,7 +67,7 @@ export class BackendService {
       const eventType = options.body.eventType as EventTypeEnum;
 
       if (eventType === EventTypeEnum.CREATE) {
-        const dockerImage = await this.dockerService.buildDockerImage(
+        const dockerImage = this.dockerService.buildDockerImage(
           createDeploymentData,
           repository,
           accessToken,
@@ -133,9 +133,15 @@ export class BackendService {
           ecsConfiguration.subdomain,
         );
 
-        await this.ec2Service.deleteSecurityGroupForECS(
-          ecsConfiguration.secgroupId,
-        );
+        // await this.ec2Service.deleteSecurityGroupForECS(
+        //   ecsConfiguration.secgroupId,
+        // );
+
+        await this.prismaService.eCSConfiguration.delete({
+          where: {
+            deploymentId,
+          },
+        });
       }
     } catch (error) {
       console.log(error);
@@ -203,11 +209,5 @@ export class BackendService {
     );
 
     await this.sqsService.sendSqsMessage(sendSqsMessageInput);
-
-    await this.prismaService.eCSConfiguration.delete({
-      where: {
-        deploymentId,
-      },
-    });
   }
 }
