@@ -53,19 +53,18 @@ export class BackendService {
     body: any;
     queueName: string;
   }): Promise<void> {
+    console.log(
+      `SQS - Message Handler - body: ${options.body}, queueName:  ${options.queueName}`,
+    );
+    options.body = JSON.parse(options.body);
+    const environmentId = options.body.environmentId as number;
+    const deploymentId = options.body.deploymentId as number;
+    const repository = options.body.repository as Repository;
+    const accessToken = options.body.accessToken as string;
+    const createDeploymentData = options.body
+      .createDeploymentData as CreateDeploymentDto;
+    const eventType = options.body.eventType as EventTypeEnum;
     try {
-      console.log(
-        `SQS - Message Handler - body: ${options.body}, queueName:  ${options.queueName}`,
-      );
-      options.body = JSON.parse(options.body);
-      const environmentId = options.body.environmentId as number;
-      const deploymentId = options.body.deploymentId as number;
-      const repository = options.body.repository as Repository;
-      const accessToken = options.body.accessToken as string;
-      const createDeploymentData = options.body
-        .createDeploymentData as CreateDeploymentDto;
-      const eventType = options.body.eventType as EventTypeEnum;
-
       if (eventType === EventTypeEnum.CREATE) {
         const dockerImage = this.dockerService.buildDockerImage(
           createDeploymentData,
@@ -145,6 +144,16 @@ export class BackendService {
       }
     } catch (error) {
       console.log(error);
+
+      await this.prismaService.deployment.update({
+        where: {
+          id: deploymentId,
+        },
+        data: {
+          status: DeploymentStatus.FAILURE,
+          reason: error.message,
+        },
+      });
     }
   }
 
