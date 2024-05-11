@@ -15,7 +15,7 @@ export class MailService {
   ) {
     const url = `${this.config.get(
       'app.root',
-    )}/new-verification?token=${token}`;
+    )}/auth/new-verification?token=${token}`;
 
     await this.mailerService.sendMail({
       to: user.email,
