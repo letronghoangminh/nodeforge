@@ -164,14 +164,18 @@ export class AlbService extends AwsService {
     listenerRuleArn: string,
     targetGroupArn: string,
   ) {
-    const deleteListenerRuleInput =
-      this.buildDeleteListenerRuleInput(listenerRuleArn);
+    try {
+      const deleteListenerRuleInput =
+        this.buildDeleteListenerRuleInput(listenerRuleArn);
 
-    await this.deleteListenerRule(deleteListenerRuleInput);
+      await this.deleteListenerRule(deleteListenerRuleInput);
 
-    const deleteTargetGroupInput =
-      this.buildDeleteTargetGroupInput(targetGroupArn);
+      const deleteTargetGroupInput =
+        this.buildDeleteTargetGroupInput(targetGroupArn);
 
-    await this.deleteTargetGroup(deleteTargetGroupInput);
+      await this.deleteTargetGroup(deleteTargetGroupInput);
+    } catch (error) {
+      console.log(error);
+    }
   }
 }

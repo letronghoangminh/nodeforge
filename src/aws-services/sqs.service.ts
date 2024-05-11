@@ -9,6 +9,7 @@ import {
 import { ConfigService } from '@nestjs/config';
 import { CreateDeploymentDto } from 'src/deployment/dto/deployment.dto';
 import { Repository } from '@prisma/client';
+import { genRandomString } from 'src/helpers/helpers';
 
 @Injectable()
 export class SqsService extends AwsService {
@@ -34,6 +35,7 @@ export class SqsService extends AwsService {
       deploymentId,
       environmentId,
       eventType,
+      eventId: genRandomString(15),
     };
 
     const input = {

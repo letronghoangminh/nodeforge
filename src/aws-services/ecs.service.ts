@@ -78,9 +78,11 @@ export class EcsService extends AwsService {
               protocol: TransportProtocol.TCP,
             },
           ],
-          environment: Object.entries(envVars).map(([name, value]) => {
-            return { name, value };
-          }),
+          environment: Object.entries(envVars)
+            .map(([name, value]) => {
+              return { name, value };
+            })
+            .concat([{ name: 'PORT', value: '8000' }]),
           logConfiguration: {
             logDriver: LogDriver.AWSLOGS,
             options: {
@@ -94,6 +96,10 @@ export class EcsService extends AwsService {
         },
       ],
     };
+
+    if (dto.command) {
+      input.containerDefinitions[0]['command'] = ['sh', '-c', dto.command];
+    }
 
     return input;
   }
@@ -229,14 +235,18 @@ export class EcsService extends AwsService {
   }
 
   async deleteEcsService(serviceName: string) {
-    const deleteServiceInput = this.buildDeleteServiceInput(serviceName);
+    try {
+      const deleteServiceInput = this.buildDeleteServiceInput(serviceName);
 
-    await this.deleteService(deleteServiceInput);
+      await this.deleteService(deleteServiceInput);
 
-    const deleteTaskDefinitionsInput = this.buildDeleteTaskDefinitionsInput(
-      `${serviceName}-task`,
-    );
+      const deleteTaskDefinitionsInput = this.buildDeleteTaskDefinitionsInput(
+        `${serviceName}-task`,
+      );
 
-    await this.deleteTaskDefinitions(deleteTaskDefinitionsInput);
+      await this.deleteTaskDefinitions(deleteTaskDefinitionsInput);
+    } catch (error) {
+      console.log(error);
+    }
   }
 }

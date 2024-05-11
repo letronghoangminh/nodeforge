@@ -41,15 +41,15 @@ module "sqs" {
   environment     = local.environment
 }
 
-# module "alb" {
-#   source = "../modules/aws/alb"
+module "alb" {
+  source = "../modules/aws/alb"
 
-#   name                = local.name
-#   vpc_id              = module.vpc.id
-#   public_subnets      = module.vpc.public_subnets
-#   environment         = local.environment
-#   alb_security_groups = [module.alb.aws_alb_security_group_id]
-#   alb_tls_cert_arn    = module.acm.dns_domain_cert_arn
-#   health_check_path   = "/health"
-#   idle_timeout        = 4000
-# }
+  name                = local.name
+  vpc_id              = module.vpc.id
+  public_subnets      = module.vpc.public_subnets
+  environment         = local.environment
+  alb_security_groups = [module.alb.aws_alb_security_group_id]
+  alb_tls_cert_arn    = module.acm.dns_domain_cert_arn
+  health_check_path   = "/health"
+  idle_timeout        = 4000
+}

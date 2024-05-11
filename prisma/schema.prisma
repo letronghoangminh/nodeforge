@@ -158,6 +158,11 @@ model ECSConfiguration {
   @@index([deploymentId, subdomain, environmentId])
 }
 
+model Event {
+  id      Int    @id @default(autoincrement())
+  eventId String @unique
+}
+
 enum Role {
   USER
   ADMIN

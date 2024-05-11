@@ -147,23 +147,27 @@ export class IamService extends AwsService {
   }
 
   async deleteIamRolesForEcs(serviceName) {
-    const deleteTaskRoleInput = this.buildDeleteRoleInput(
-      `${serviceName}-ecsTaskRole`,
-    );
+    try {
+      const deleteTaskRoleInput = this.buildDeleteRoleInput(
+        `${serviceName}-ecsTaskRole`,
+      );
 
-    await this.deleteRole(deleteTaskRoleInput);
+      await this.deleteRole(deleteTaskRoleInput);
 
-    const detachRolePolicyInput = this.buildDetachRolePolicyInput(
-      `${serviceName}-ecsTaskExecutionRole`,
-      'arn:aws:iam::aws:policy/service-role/AmazonECSTaskExecutionRolePolicy',
-    );
+      const detachRolePolicyInput = this.buildDetachRolePolicyInput(
+        `${serviceName}-ecsTaskExecutionRole`,
+        'arn:aws:iam::aws:policy/service-role/AmazonECSTaskExecutionRolePolicy',
+      );
 
-    await this.detachRolePolicy(detachRolePolicyInput);
+      await this.detachRolePolicy(detachRolePolicyInput);
 
-    const deleteTaskExecutionRoleInput = this.buildDeleteRoleInput(
-      `${serviceName}-ecsTaskExecutionRole`,
-    );
+      const deleteTaskExecutionRoleInput = this.buildDeleteRoleInput(
+        `${serviceName}-ecsTaskExecutionRole`,
+      );
 
-    await this.deleteRole(deleteTaskExecutionRoleInput);
+      await this.deleteRole(deleteTaskExecutionRoleInput);
+    } catch (error) {
+      console.log(error);
+    }
   }
 }

@@ -372,18 +372,6 @@ export class DeploymentService {
       select: {
         id: true,
         type: true,
-        repositoryId: true,
-        ECSConfiguration: {
-          select: {
-            environmentId: true,
-          },
-        },
-        AmplifyConfiguration: {
-          select: {
-            environmentId: true,
-            appId: true,
-          },
-        },
       },
     });
 
@@ -391,9 +379,7 @@ export class DeploymentService {
 
     try {
       if (deployment.type === DeploymentType.FRONTEND)
-        await this.frontendService.deleteDeployment(
-          deployment.AmplifyConfiguration.appId,
-        );
+        await this.frontendService.deleteDeployment(deployment.id);
       else if (deployment.type === DeploymentType.BACKEND)
         await this.backendService.deleteDeployment(deployment.id);
     } catch (error) {
@@ -402,26 +388,6 @@ export class DeploymentService {
         'Cannot delete deployment, please try again later',
       );
     }
-
-    await this.prismaService.environment.delete({
-      where: {
-        id:
-          deployment.AmplifyConfiguration?.environmentId ||
-          deployment.ECSConfiguration?.environmentId,
-      },
-    });
-
-    await this.prismaService.deployment.delete({
-      where: {
-        id: deployment.id,
-      },
-    });
-
-    await this.prismaService.repository.delete({
-      where: {
-        id: deployment.repositoryId,
-      },
-    });
 
     return PlainToInstance(DeploymentModel, deployment);
   }

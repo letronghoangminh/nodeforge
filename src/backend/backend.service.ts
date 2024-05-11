@@ -64,6 +64,22 @@ export class BackendService {
     const createDeploymentData = options.body
       .createDeploymentData as CreateDeploymentDto;
     const eventType = options.body.eventType as EventTypeEnum;
+    const eventId = options.body.eventId as string;
+
+    const event = await this.prismaService.event.findFirst({
+      where: {
+        eventId,
+      },
+    });
+
+    if (event) return;
+
+    await this.prismaService.event.create({
+      data: {
+        eventId,
+      },
+    });
+
     try {
       if (eventType === EventTypeEnum.CREATE) {
         const dockerImage = this.dockerService.buildDockerImage(
@@ -103,6 +119,20 @@ export class BackendService {
           },
         });
       } else if (eventType === EventTypeEnum.DELETE) {
+        const deployment = await this.prismaService.deployment.findFirst({
+          where: {
+            id: deploymentId,
+          },
+          include: {
+            ECSConfiguration: {
+              select: {
+                id: true,
+                environmentId: true,
+              },
+            },
+          },
+        });
+
         const ecsConfiguration =
           await this.prismaService.eCSConfiguration.findFirst({
             where: {
@@ -117,19 +147,19 @@ export class BackendService {
             },
           });
 
-        await this.ecsService.deleteEcsService(ecsConfiguration.serviceName);
+        await this.ecsService.deleteEcsService(ecsConfiguration?.serviceName);
 
         await this.iamService.deleteIamRolesForEcs(
-          ecsConfiguration.serviceName,
+          ecsConfiguration?.serviceName,
         );
 
         await this.albService.deleteTargetGroupForEcs(
-          ecsConfiguration.listenerRuleArn,
-          ecsConfiguration.targetGroupArn,
+          ecsConfiguration?.listenerRuleArn,
+          ecsConfiguration?.targetGroupArn,
         );
 
         await this.r53Service.deleteRoute53RecordForECS(
-          ecsConfiguration.subdomain,
+          ecsConfiguration?.subdomain,
         );
 
         // await this.ec2Service.deleteSecurityGroupForECS(
@@ -138,7 +168,25 @@ export class BackendService {
 
         await this.prismaService.eCSConfiguration.delete({
           where: {
-            deploymentId,
+            id: deployment.ECSConfiguration.id,
+          },
+        });
+
+        await this.prismaService.environment.delete({
+          where: {
+            id: deployment.ECSConfiguration.environmentId,
+          },
+        });
+
+        await this.prismaService.deployment.delete({
+          where: {
+            id: deploymentId,
+          },
+        });
+
+        await this.prismaService.repository.delete({
+          where: {
+            id: deployment.repositoryId,
           },
         });
       }

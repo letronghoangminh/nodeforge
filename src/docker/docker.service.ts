@@ -40,7 +40,10 @@ export class DockerService {
     accessToken: string,
   ) {
     execSync(
-      `cd /tmp/${createDeploymentData.name} && git clone https://${accessToken}@github.com/${repository.owner}/${repository.name}@${repository.branch}`,
+      `cd /tmp/${createDeploymentData.name} && git clone https://${accessToken}@github.com/${repository.owner}/${repository.name}`,
+    );
+    execSync(
+      `cd /tmp/${createDeploymentData.name}/${repository.name} && git checkout ${repository.branch}`,
     );
   }
 

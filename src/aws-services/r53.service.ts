@@ -97,8 +97,12 @@ export class R53Service extends AwsService {
   }
 
   async deleteRoute53RecordForECS(subdomain: string) {
-    const deleteR53RecordInput = this.buildDeleteR53RecordInput(subdomain);
+    try {
+      const deleteR53RecordInput = this.buildDeleteR53RecordInput(subdomain);
 
-    await this.deleteR53Record(deleteR53RecordInput);
+      await this.deleteR53Record(deleteR53RecordInput);
+    } catch (error) {
+      console.log(error);
+    }
   }
 }

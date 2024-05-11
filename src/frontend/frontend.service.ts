@@ -59,15 +59,47 @@ export class FrontendService {
     });
   }
 
-  async deleteDeployment(appId: string): Promise<void> {
+  async deleteDeployment(deploymentId: number): Promise<void> {
+    const deployment = await this.prismaService.deployment.findFirst({
+      where: {
+        id: deploymentId,
+      },
+      include: {
+        AmplifyConfiguration: {
+          select: {
+            environmentId: true,
+            appId: true,
+          },
+        },
+      },
+    });
+
     const deleteAppInput = {
-      appId: appId,
+      appId: deployment.AmplifyConfiguration.appId,
     };
     await this.amplifyService.deleteApp(deleteAppInput);
 
     await this.prismaService.amplifyConfiguration.delete({
       where: {
-        appId: appId,
+        appId: deployment.AmplifyConfiguration.appId,
+      },
+    });
+
+    await this.prismaService.environment.delete({
+      where: {
+        id: deployment.AmplifyConfiguration.environmentId,
+      },
+    });
+
+    await this.prismaService.deployment.delete({
+      where: {
+        id: deployment.id,
+      },
+    });
+
+    await this.prismaService.repository.delete({
+      where: {
+        id: deployment.repositoryId,
       },
     });
   }
