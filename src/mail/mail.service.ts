@@ -13,7 +13,9 @@ export class MailService {
     user: { email: string; name: string },
     token: string,
   ) {
-    const url = `${this.config.get('app.root')}/verify?token=${token}`;
+    const url = `${this.config.get(
+      'app.root',
+    )}/new-verification?token=${token}`;
 
     await this.mailerService.sendMail({
       to: user.email,
@@ -32,7 +34,7 @@ export class MailService {
   ) {
     const url = `${this.config.get(
       'app.root',
-    )}/auth/reset-password?token=${token}`;
+    )}/auth/new-password?token=${token}`;
 
     await this.mailerService.sendMail({
       to: user.email,

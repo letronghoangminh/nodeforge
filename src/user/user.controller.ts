@@ -22,7 +22,7 @@ import { GetUser } from 'src/auth/decorator/get-user.decorator';
 import { AdminGuard, UserGuard } from 'src/auth/guard/auth.guard';
 import { APISummaries } from 'src/helpers/helpers';
 import { PageDto } from 'src/prisma/helper/prisma.helper';
-import { UpdateUserDto } from './dto/user.dto';
+import { UpdateUserDto, VerifyDto } from './dto/user.dto';
 import { UserModel } from './model/user.model';
 import { UserService } from './user.service';
 import { VerifyGuard } from 'src/auth/guard/verify.guard';
@@ -48,16 +48,16 @@ export class UserController {
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: APISummaries.USER })
   @ApiOkResponse({ type: UserModel })
-  @ApiBearerAuth()
-  @UseGuards(UserGuard)
+  // @ApiBearerAuth()
+  // @UseGuards(UserGuard)
   @Get('info/:username')
   getUserByUsername(
     @Param('username') username: string,
     @GetUser() user: UserType,
   ): Promise<UserModel> {
     return this.userService.getUserByUsername(username, {
-      role: user.role,
-      username: user.username,
+      role: user?.role,
+      username: user?.username,
     });
   }
 
@@ -97,13 +97,11 @@ export class UserController {
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: APISummaries.USER })
   @ApiOkResponse({ type: String })
-  @ApiBearerAuth()
-  @UseGuards(UserGuard)
   @Post('verify')
-  verifyUser(@GetUser() user: UserType): Promise<string> {
+  verifyUser(@Body() dto: VerifyDto): Promise<string> {
     return this.userService.verifyUser({
-      email: user.email,
-      username: user.username,
+      email: dto.email,
+      username: dto.username,
     });
   }
 }

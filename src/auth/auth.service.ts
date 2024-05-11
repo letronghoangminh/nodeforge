@@ -176,7 +176,14 @@ export class AuthService {
   async signToken(
     user: User,
   ): Promise<{ accessToken: string; refreshToken: string }> {
-    const pickedFields: string[] = ['id', 'email', 'name', 'role', 'username'];
+    const pickedFields: string[] = [
+      'id',
+      'email',
+      'name',
+      'role',
+      'username',
+      'isVerified',
+    ];
     const payload = pick(user, pickedFields);
 
     const accessToken: string = await this.jwt.signAsync(payload, {

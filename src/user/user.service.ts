@@ -41,8 +41,8 @@ export class UserService {
   ): Promise<UserModel> {
     let result: UserModel;
     if (
-      (user.role === Role.USER && username === user.username) ||
-      user.role === Role.ADMIN
+      (user?.role === Role.USER && username === user?.username) ||
+      user?.role === Role.ADMIN
     ) {
       const user = await this.prismaService.user.findFirst({
         where: {
