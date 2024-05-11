@@ -86,26 +86,21 @@ export class AuthService {
     return this.signToken(user);
   }
 
-  async verify(
-    query: VerifyUserDto,
-    options: {
-      email: string;
-      username: string;
-    },
-  ) {
+  async verify(query: VerifyUserDto) {
     const user = await this.prisma.user.findUnique({
       where: {
-        username: options.username,
+        verifyToken: query.token,
       },
       select: {
         verifyToken: true,
+        username: true,
       },
     });
 
     if (query.token === user.verifyToken) {
       await this.prisma.user.update({
         where: {
-          username: options.username,
+          username: user.username,
         },
         data: {
           isVerified: true,

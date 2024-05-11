@@ -65,10 +65,7 @@ export class AuthController {
   @UseGuards(UserGuard)
   @Get('verify')
   verify(@Query() query: VerifyUserDto, @GetUser() user: UserType) {
-    return this.authService.verify(query, {
-      email: user.email,
-      username: user.username,
-    });
+    return this.authService.verify(query);
   }
 
   @ApiOperation({ summary: APISummaries.UNAUTH })
