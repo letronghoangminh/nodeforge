@@ -2,7 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { Repository } from '@prisma/client';
 import { execSync } from 'child_process';
-import { mkdirSync, rmSync } from 'fs';
+import { mkdirSync, rmSync, writeFileSync } from 'fs';
 import { CreateDeploymentDto } from 'src/deployment/dto/deployment.dto';
 
 @Injectable()
@@ -13,10 +13,11 @@ export class DockerService {
     createDeploymentData: CreateDeploymentDto,
     repository: Repository,
     accessToken: string,
+    dockerfile: string,
   ): string {
     this.createWorkSpace(createDeploymentData);
     this.cloneRepository(createDeploymentData, repository, accessToken);
-    this.buildImage(createDeploymentData, repository);
+    this.buildImage(createDeploymentData, repository, dockerfile);
     this.tagImage(createDeploymentData);
     this.getRepositoryToken();
     this.pushImage(createDeploymentData);
@@ -50,9 +51,14 @@ export class DockerService {
   private buildImage(
     createDeploymentData: CreateDeploymentDto,
     repository: Repository,
+    dockerfile: string,
   ) {
+    writeFileSync(
+      `/tmp/${createDeploymentData.name}/${repository.name}/${createDeploymentData.name}.Dockerfile`,
+      dockerfile,
+    );
     execSync(
-      `docker buildx build --platform linux/amd64 -t ${createDeploymentData.name} /tmp/${createDeploymentData.name}/${repository.name}`,
+      `docker buildx build --platform linux/amd64 -t ${createDeploymentData.name} /tmp/${createDeploymentData.name}/${repository.name} -f /tmp/${createDeploymentData.name}/${repository.name}/${createDeploymentData.name}.Dockerfile`,
     );
   }
 

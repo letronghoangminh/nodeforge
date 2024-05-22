@@ -12,6 +12,8 @@ import { DockerService } from 'src/docker/docker.service';
 import { Ec2Service } from 'src/aws-services/ec2.service';
 import { IamService } from 'src/aws-services/iam.service';
 import { EventTypeEnum } from './enum/backend.enum';
+import { GithubService } from 'src/github/github.service';
+import { OpenaiService } from 'src/openai/openai.service';
 
 @Injectable()
 export class BackendService {
@@ -25,6 +27,8 @@ export class BackendService {
     private ec2Service: Ec2Service,
     private iamService: IamService,
     private dockerService: DockerService,
+    private githubService: GithubService,
+    private openaiService: OpenaiService,
   ) {}
 
   onModuleInit() {
@@ -47,6 +51,29 @@ export class BackendService {
 
     console.log(`SQS - Started Consumer with queue ${queueName}`);
     consumer.start();
+  }
+
+  private async generateDockerfile(
+    dto: CreateDeploymentDto,
+    repository: Repository,
+    userId: number,
+  ): Promise<string> {
+    const packageJson = await this.githubService.getFileContent(
+      'package.json',
+      repository.name,
+      repository.owner,
+      repository.branch,
+      userId,
+    );
+
+    const dockerfile = await this.openaiService.generateDockerfile({
+      framework: dto.framework,
+      packageJson,
+    });
+
+    console.log(dockerfile);
+
+    return dockerfile;
   }
 
   private async messageHandler(options: {
@@ -80,12 +107,35 @@ export class BackendService {
       },
     });
 
+    const deployment = await this.prismaService.deployment.findFirst({
+      where: {
+        id: deploymentId,
+      },
+      include: {
+        ECSConfiguration: {
+          select: {
+            id: true,
+            environmentId: true,
+          },
+        },
+      },
+    });
+
+    if (!deployment) return;
+
     try {
       if (eventType === EventTypeEnum.CREATE) {
+        const dockerfile = await this.generateDockerfile(
+          createDeploymentData,
+          repository,
+          deployment.userId,
+        );
+
         const dockerImage = this.dockerService.buildDockerImage(
           createDeploymentData,
           repository,
           accessToken,
+          dockerfile,
         );
 
         const { secgroupId, listenerRuleArn, targetGroupArn } =
@@ -119,20 +169,6 @@ export class BackendService {
           },
         });
       } else if (eventType === EventTypeEnum.DELETE) {
-        const deployment = await this.prismaService.deployment.findFirst({
-          where: {
-            id: deploymentId,
-          },
-          include: {
-            ECSConfiguration: {
-              select: {
-                id: true,
-                environmentId: true,
-              },
-            },
-          },
-        });
-
         const ecsConfiguration =
           await this.prismaService.eCSConfiguration.findFirst({
             where: {

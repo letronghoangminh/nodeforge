@@ -23,6 +23,8 @@ import { IamService } from 'src/aws-services/iam.service';
     DockerService,
     Ec2Service,
     IamService,
+    GithubModule,
+    OpenaiModule,
   ],
   exports: [BackendService],
   imports: [

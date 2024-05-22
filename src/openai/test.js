@@ -128,10 +128,10 @@ async function main() {
       },
       {
         role: 'user',
-        content: `Use the latest base image`,
+        content: `Base on this package.json file content, choose the suitable base image: ${packageJson}`,
       },
     ],
-    model: 'gpt-3.5-turbo',
+    model: 'gpt-4-turbo',
   });
 
   console.log(completion.choices[0].message.content);

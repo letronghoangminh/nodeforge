@@ -13,7 +13,6 @@ export class OpenaiService {
     this.openai = new OpenAI({
       apiKey: this.configService.get('openai.apiKey'),
     });
-    this.model = this.configService.get('openai.model');
   }
 
   private validateBuildSpec(yamlString: string) {
@@ -117,7 +116,7 @@ export class OpenaiService {
     for (let i = 0; i < 10; i++) {
       const response = await this.openai.chat.completions.create({
         messages: prompts,
-        model: this.model,
+        model: 'gpt-3.5-turbo',
       });
 
       buildSpec = response.choices[0].message.content;
@@ -127,5 +126,48 @@ export class OpenaiService {
     throw new BadRequestException(
       'Cannot generate Amplify buildspec, please try again later',
     );
+  }
+
+  async generateDockerfile(options: {
+    framework: string;
+    packageJson?: string;
+  }): Promise<string> {
+    const prompts: ChatCompletionMessageParam[] = [
+      {
+        role: 'system',
+        content:
+          'You only return the raw file content, do not explain or add any comments, do not add markdown syntax.',
+      },
+      {
+        role: 'system',
+        content:
+          'The file content returned can be used directly without any modifications.',
+      },
+      {
+        role: 'system',
+        content: 'Make sure the file content and syntax is valid for Docker.',
+      },
+      {
+        role: 'user',
+        content: `Generate the Dockerfile for running ${options.framework} application`,
+      },
+      {
+        role: 'user',
+        content: 'Expose the port 8000, do not add ENTRYPOINT and COMMAND',
+      },
+    ];
+
+    if (options.packageJson)
+      prompts.push({
+        role: 'user',
+        content: `Base on this package.json file content, choose the suitable base image: ${options.packageJson}`,
+      });
+
+    const response = await this.openai.chat.completions.create({
+      messages: prompts,
+      model: 'gpt-4o',
+    });
+
+    return response.choices[0].message.content;
   }
 }
