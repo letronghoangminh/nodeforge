@@ -9,7 +9,11 @@ import {
   CreateDeploymentDto,
   UpdateEnvironmentDto,
 } from './dto/deployment.dto';
-import { DeploymentModel, EnvironmentModel } from './model/deployment.model';
+import {
+  DeploymentModel,
+  EnvironmentModel,
+  LogModel,
+} from './model/deployment.model';
 import { FrontendService } from 'src/frontend/frontend.service';
 import {
   DeploymentStatus,
@@ -252,14 +256,13 @@ export class DeploymentService {
   async getLogsByDeploymentId(
     id: number,
     user: { id: number },
-  ): Promise<EnvironmentModel> {
+  ): Promise<LogModel[]> {
     const deployment = await this.prismaService.deployment.findFirst({
       where: {
         id: id,
         userId: user.id,
       },
-      select: {
-        id: true,
+      include: {
         ECSConfiguration: {
           select: {
             environmentId: true,
@@ -279,9 +282,12 @@ export class DeploymentService {
       await this.frontendService.getDeploymentLogs(
         deployment.AmplifyConfiguration.appId,
       );
+    } else if (deployment.ECSConfiguration) {
+      return PlainToInstance(
+        LogModel,
+        await this.backendService.getDeploymentLogs(deployment.name),
+      );
     }
-
-    return PlainToInstance(EnvironmentModel, null);
   }
 
   async createNewDeployment(

@@ -105,3 +105,13 @@ export class EnvironmentModel {
   @Transform(({ obj }) => JSON.parse(JSON.stringify(obj.envVars)))
   envVars: Record<string, string>;
 }
+
+export class LogModel {
+  @Expose()
+  @ApiProperty({ type: String })
+  timestamp: string;
+
+  @Expose()
+  @ApiProperty({ type: String })
+  message: string;
+}

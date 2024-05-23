@@ -12,6 +12,8 @@ import { SqsService } from 'src/aws-services/sqs.service';
 import { DockerService } from 'src/docker/docker.service';
 import { Ec2Service } from 'src/aws-services/ec2.service';
 import { IamService } from 'src/aws-services/iam.service';
+import { CloudWatchLogService } from 'src/aws-services/cloudwatchlog.service';
+import { CloudWatchService } from 'src/aws-services/cloudwatch.service';
 
 @Module({
   providers: [
@@ -25,6 +27,8 @@ import { IamService } from 'src/aws-services/iam.service';
     IamService,
     GithubModule,
     OpenaiModule,
+    CloudWatchService,
+    CloudWatchLogService,
   ],
   exports: [BackendService],
   imports: [

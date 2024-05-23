@@ -27,7 +27,11 @@ import {
   UpdateEnvironmentDto,
 } from './dto/deployment.dto';
 import { GetUser } from 'src/auth/decorator/get-user.decorator';
-import { DeploymentModel, EnvironmentModel } from './model/deployment.model';
+import {
+  DeploymentModel,
+  EnvironmentModel,
+  LogModel,
+} from './model/deployment.model';
 import { UserType } from 'src/helpers/types';
 
 @Controller('deployment')
@@ -99,14 +103,14 @@ export class DeploymentController {
 
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: APISummaries.USER })
-  @ApiOkResponse({ type: EnvironmentModel })
+  @ApiOkResponse({ type: [LogModel] })
   @ApiBearerAuth()
   @UseGuards(UserGuard, VerifyGuard)
   @Get(':id/logs')
   getLogsByDeploymentId(
     @Param('id', ParseIntPipe) id: number,
     @GetUser() user: UserType,
-  ): Promise<EnvironmentModel> {
+  ): Promise<LogModel[]> {
     return this.deploymentService.getLogsByDeploymentId(id, user);
   }
 

@@ -14,6 +14,8 @@ import { IamService } from 'src/aws-services/iam.service';
 import { EventTypeEnum } from './enum/backend.enum';
 import { GithubService } from 'src/github/github.service';
 import { OpenaiService } from 'src/openai/openai.service';
+import { CloudWatchLogService } from 'src/aws-services/cloudwatchlog.service';
+import { CloudWatchService } from 'src/aws-services/cloudwatch.service';
 
 @Injectable()
 export class BackendService {
@@ -26,6 +28,8 @@ export class BackendService {
     private sqsService: SqsService,
     private ec2Service: Ec2Service,
     private iamService: IamService,
+    private cloudwatchService: CloudWatchService,
+    private cloudwatchlogService: CloudWatchLogService,
     private dockerService: DockerService,
     private githubService: GithubService,
     private openaiService: OpenaiService,
@@ -302,5 +306,11 @@ export class BackendService {
     );
 
     await this.sqsService.sendSqsMessage(sendSqsMessageInput);
+  }
+
+  async getDeploymentLogs(name: string) {
+    const logEvents = await this.cloudwatchlogService.getLogsForECS(name);
+    await this.cloudwatchService.getHealthMetricsForECS(name);
+    return logEvents;
   }
 }
