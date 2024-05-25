@@ -19,8 +19,8 @@ export class CloudWatchService extends AwsService {
   }
 
   private buildGetMetricStatisticsInput(
-    metricName: string,
     serviceName: string,
+    metricName: string,
   ): GetMetricStatisticsCommandInput {
     const endTime = new Date();
     const startTime = new Date(endTime.getTime() - 5 * 60 * 1000);
@@ -71,7 +71,9 @@ export class CloudWatchService extends AwsService {
 
     const memoryMetricResponse = await this.getMetricStatistics(memoryMetric);
 
-    console.log(JSON.stringify(cpuMetricResponse.Datapoints));
-    console.log(JSON.stringify(memoryMetricResponse.Datapoints));
+    return {
+      cpu: cpuMetricResponse.Datapoints[0],
+      memory: memoryMetricResponse.Datapoints[0],
+    };
   }
 }

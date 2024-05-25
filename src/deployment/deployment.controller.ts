@@ -30,6 +30,7 @@ import { GetUser } from 'src/auth/decorator/get-user.decorator';
 import {
   DeploymentModel,
   EnvironmentModel,
+  HealthMetricsModel,
   LogModel,
 } from './model/deployment.model';
 import { UserType } from 'src/helpers/types';
@@ -134,5 +135,18 @@ export class DeploymentController {
   @Post('/check-subdomain')
   checkSubdomain(@Body() dto: CheckSubdomainDto): void {
     this.deploymentService.checkSubdomain(dto.subdomain);
+  }
+
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({ summary: APISummaries.USER })
+  @ApiOkResponse({ type: HealthMetricsModel })
+  @ApiBearerAuth()
+  @UseGuards(UserGuard, VerifyGuard)
+  @Get(':id/metrics')
+  getHealthMetricsByDeploymentId(
+    @Param('id', ParseIntPipe) id: number,
+    @GetUser() user: UserType,
+  ): Promise<HealthMetricsModel> {
+    return this.deploymentService.getHealthMetricsByDeploymentId(id, user);
   }
 }

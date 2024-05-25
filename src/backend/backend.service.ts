@@ -308,9 +308,18 @@ export class BackendService {
     await this.sqsService.sendSqsMessage(sendSqsMessageInput);
   }
 
-  async getDeploymentLogs(name: string) {
-    const logEvents = await this.cloudwatchlogService.getLogsForECS(name);
-    await this.cloudwatchService.getHealthMetricsForECS(name);
+  async getDeploymentLogs(serviceName: string) {
+    const logEvents = await this.cloudwatchlogService.getLogsForECS(
+      serviceName,
+    );
     return logEvents;
+  }
+
+  async getHealthMetrics(serviceName: string) {
+    const healthMetrics = await this.cloudwatchService.getHealthMetricsForECS(
+      serviceName,
+    );
+
+    return healthMetrics;
   }
 }

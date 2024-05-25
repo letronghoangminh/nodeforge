@@ -115,3 +115,13 @@ export class LogModel {
   @ApiProperty({ type: String })
   message: string;
 }
+
+export class HealthMetricsModel {
+  @Expose()
+  @ApiProperty({ type: String })
+  cpu: string;
+
+  @Expose()
+  @ApiProperty({ type: String })
+  memory: string;
+}

@@ -3,6 +3,7 @@ import { CreateDeploymentDto } from 'src/deployment/dto/deployment.dto';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { Repository } from '@prisma/client';
 import { AmplifyService } from 'src/aws-services/amplify.service';
+import axios from 'axios';
 
 @Injectable()
 export class FrontendService {
@@ -122,10 +123,29 @@ export class FrontendService {
     await this.amplifyService.startDeployment(startDeploymentInput);
   }
 
-  async getDeploymentLogs(appId: string): Promise<void> {
+  async getDeploymentLogs(appId: string) {
     const input = this.amplifyService.buildGetLogsInput(appId);
-    const logs = await this.amplifyService.getLogs(input);
+    const logUrl = (await this.amplifyService.getLogs(input)).logUrl;
 
-    console.log(logs.logUrl);
+    const response = await axios.get(logUrl);
+    const data = response.data;
+
+    const logs = [];
+    const lines = data.split('\n');
+
+    lines.forEach((line) => {
+      const logData = line.split(',');
+      if (logData.length <= 1) return;
+
+      const log = {
+        timestamp: `${logData[0]} ${logData[1]}`,
+        message: `${logData[5]} https://${logData[15]}${logData[7]}`,
+      };
+      logs.push(log);
+    });
+
+    logs.shift();
+
+    return logs;
   }
 }

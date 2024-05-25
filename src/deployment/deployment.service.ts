@@ -12,6 +12,7 @@ import {
 import {
   DeploymentModel,
   EnvironmentModel,
+  HealthMetricsModel,
   LogModel,
 } from './model/deployment.model';
 import { FrontendService } from 'src/frontend/frontend.service';
@@ -279,14 +280,60 @@ export class DeploymentService {
     if (!deployment) throw new NotFoundException('No deployment found');
 
     if (deployment.AmplifyConfiguration) {
-      await this.frontendService.getDeploymentLogs(
-        deployment.AmplifyConfiguration.appId,
+      return PlainToInstance(
+        LogModel,
+        await this.frontendService.getDeploymentLogs(
+          deployment.AmplifyConfiguration.appId,
+        ),
       );
     } else if (deployment.ECSConfiguration) {
       return PlainToInstance(
         LogModel,
         await this.backendService.getDeploymentLogs(deployment.name),
       );
+    }
+  }
+
+  async getHealthMetricsByDeploymentId(
+    id: number,
+    user: { id: number },
+  ): Promise<HealthMetricsModel> {
+    const deployment = await this.prismaService.deployment.findFirst({
+      where: {
+        id: id,
+        userId: user.id,
+      },
+      include: {
+        ECSConfiguration: {
+          select: {
+            environmentId: true,
+          },
+        },
+        AmplifyConfiguration: {
+          select: {
+            appId: true,
+          },
+        },
+      },
+    });
+
+    if (!deployment) throw new NotFoundException('No deployment found');
+
+    if (deployment.AmplifyConfiguration) {
+      throw new BadRequestException(
+        'This feature is only for Backend type of deployments',
+      );
+    } else if (deployment.ECSConfiguration) {
+      const healthMetrics = await this.backendService.getHealthMetrics(
+        deployment.name,
+      );
+
+      console.log(healthMetrics);
+
+      return PlainToInstance(HealthMetricsModel, {
+        cpu: healthMetrics.cpu?.Average?.toString(),
+        memory: healthMetrics.memory?.Average?.toString(),
+      });
     }
   }
 
