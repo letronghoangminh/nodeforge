@@ -10,6 +10,7 @@ import {
   UpdateEnvironmentDto,
 } from './dto/deployment.dto';
 import {
+  DeploymentByUserModel,
   DeploymentModel,
   EnvironmentModel,
   HealthMetricsModel,
@@ -21,6 +22,7 @@ import {
   DeploymentType,
   Environment,
   Repository,
+  Role,
   SubscriptionType,
 } from '@prisma/client';
 import { PlainToInstance } from 'src/helpers/helpers';
@@ -226,6 +228,7 @@ export class DeploymentService {
         ECSConfiguration: {
           select: {
             environmentId: true,
+            id: true,
           },
         },
         AmplifyConfiguration: {
@@ -250,6 +253,18 @@ export class DeploymentService {
         envVars: dto.envVars,
       },
     });
+
+    if (deployment.ECSConfiguration) {
+      await this.backendService.updateEnvironment(
+        deployment.ECSConfiguration.id,
+      );
+    } else if (deployment.AmplifyConfiguration) {
+      await this.frontendService.updateEnvironment(
+        deployment.AmplifyConfiguration.appId,
+        dto.envVars,
+        deployment.AmplifyConfiguration.productionBranch,
+      );
+    }
 
     return PlainToInstance(EnvironmentModel, environment);
   }
@@ -415,13 +430,18 @@ export class DeploymentService {
 
   async deleteDeploymenByDeploymentId(
     id: number,
-    user: { id: number },
+    user: { id: number; role: string },
   ): Promise<DeploymentModel> {
+    const condition = {
+      id: id,
+    };
+
+    if (user.role === Role.USER) {
+      condition['userId'] = user.id;
+    }
+
     const deployment = await this.prismaService.deployment.findFirst({
-      where: {
-        id: id,
-        userId: user.id,
-      },
+      where: condition,
       select: {
         id: true,
         type: true,
@@ -443,5 +463,26 @@ export class DeploymentService {
     }
 
     return PlainToInstance(DeploymentModel, deployment);
+  }
+
+  async getAllDeployments(): Promise<DeploymentByUserModel[]> {
+    const deploymentByUsers = await this.prismaService.user.findMany({
+      where: {
+        role: {
+          not: Role.ADMIN,
+        },
+      },
+      include: {
+        Deployment: {
+          include: {
+            ECSConfiguration: true,
+            AmplifyConfiguration: true,
+            repository: true,
+          },
+        },
+      },
+    });
+
+    return PlainToInstance(DeploymentByUserModel, deploymentByUsers);
   }
 }

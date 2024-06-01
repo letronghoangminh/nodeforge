@@ -23,6 +23,8 @@ import { CreateDeploymentDto } from 'src/deployment/dto/deployment.dto';
 
 @Injectable()
 export class AlbService extends AwsService {
+  private priority = 100;
+
   constructor(private configService: ConfigService) {
     super();
     this.client = new ElasticLoadBalancingV2Client({
@@ -75,7 +77,7 @@ export class AlbService extends AwsService {
           },
         },
       ],
-      Priority: 100,
+      Priority: this.priority,
       Actions: [
         {
           Type: ActionTypeEnum.FORWARD,
@@ -83,6 +85,8 @@ export class AlbService extends AwsService {
         },
       ],
     };
+
+    this.priority++; // Too lazy to implement it properly
 
     return input;
   }

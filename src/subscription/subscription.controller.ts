@@ -7,6 +7,8 @@ import {
   Req,
   UseGuards,
   Headers,
+  Put,
+  Body,
 } from '@nestjs/common';
 import {
   ApiBearerAuth,
@@ -17,7 +19,7 @@ import {
 import { SubscriptionService } from './subscription.service';
 import { UserType } from 'src/helpers/types';
 import { APISummaries } from 'src/helpers/helpers';
-import { UserGuard } from 'src/auth/guard/auth.guard';
+import { AdminGuard, UserGuard } from 'src/auth/guard/auth.guard';
 import { GetUser } from 'src/auth/decorator/get-user.decorator';
 import {
   FinishCheckoutModel,
@@ -30,6 +32,7 @@ import {
   ProSubscriptionGuard,
 } from './guard/subscription.guard';
 import { RequestWithRawBody } from 'src/helpers/interfaces';
+import { UpdateSubscriptionDto } from './dto/subscription.dto';
 
 @Controller('subscription')
 @ApiTags('SUBSCRIPTION')
@@ -44,6 +47,28 @@ export class SubscriptionController {
   @Get()
   getSubscription(@GetUser() user: UserType): Promise<SubscriptionModel> {
     return this.subscriptionService.getSubscription(user);
+  }
+
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({ summary: APISummaries.ADMIN })
+  @ApiOkResponse({ type: [SubscriptionModel] })
+  @ApiBearerAuth()
+  @UseGuards(AdminGuard)
+  @Get('admin/subscriptions')
+  getAllSubscriptions(): Promise<SubscriptionModel[]> {
+    return this.subscriptionService.getAllSubscriptions();
+  }
+
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({ summary: APISummaries.ADMIN })
+  @ApiOkResponse({ type: SubscriptionModel })
+  @ApiBearerAuth()
+  @UseGuards(AdminGuard)
+  @Put('admin/update-subscription')
+  updateSubscriptionType(
+    @Body() dto: UpdateSubscriptionDto,
+  ): Promise<SubscriptionModel> {
+    return this.subscriptionService.updateSubscriptionType(dto);
   }
 
   @HttpCode(HttpStatus.OK)

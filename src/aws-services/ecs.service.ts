@@ -22,9 +22,13 @@ import {
   RegisterTaskDefinitionCommandOutput,
   SchedulingStrategy,
   TransportProtocol,
+  UpdateServiceCommand,
+  UpdateServiceCommandInput,
+  UpdateServiceCommandOutput,
 } from '@aws-sdk/client-ecs';
 import { CreateDeploymentDto } from 'src/deployment/dto/deployment.dto';
 import { PrismaService } from 'src/prisma/prisma.service';
+import { ECSConfiguration } from '@prisma/client';
 
 @Injectable()
 export class EcsService extends AwsService {
@@ -39,7 +43,8 @@ export class EcsService extends AwsService {
   }
 
   private async buildRegisterTaskDefinitionInput(
-    dto: CreateDeploymentDto,
+    name: string,
+    command: string,
     dockerImage: string,
     environmentId: number,
     taskRoleArn: string,
@@ -59,7 +64,7 @@ export class EcsService extends AwsService {
     );
 
     const input = {
-      family: `${dto.name}-task`,
+      family: `${name}-task`,
       networkMode: NetworkMode.AWSVPC,
       requiresCompatibilities: [Compatibility.FARGATE],
       cpu: '256',
@@ -68,7 +73,7 @@ export class EcsService extends AwsService {
       executionRoleArn: taskExecutionRoleArn,
       containerDefinitions: [
         {
-          name: `${dto.name}-container`,
+          name: `${name}-container`,
           image: dockerImage,
           essential: true,
           portMappings: [
@@ -90,15 +95,15 @@ export class EcsService extends AwsService {
                 'aws.ecs.cloudwatchLogGroup',
               ),
               'awslogs-region': this.configService.get('aws.region'),
-              'awslogs-stream-prefix': `${dto.name}`,
+              'awslogs-stream-prefix': `${name}`,
             },
           },
         },
       ],
     };
 
-    if (dto.command) {
-      input.containerDefinitions[0]['command'] = ['sh', '-c', dto.command];
+    if (command) {
+      input.containerDefinitions[0]['command'] = ['sh', '-c', command];
     }
 
     return input;
@@ -162,6 +167,28 @@ export class EcsService extends AwsService {
     >(CreateServiceCommand, input);
   }
 
+  private buildUpdateServiceInput(
+    taskDefinitionArn: string,
+    serviceName: string,
+  ): UpdateServiceCommandInput {
+    const input = {
+      taskDefinition: taskDefinitionArn,
+      cluster: this.configService.get('aws.ecs.clusterName'),
+      service: serviceName,
+    };
+
+    return input;
+  }
+
+  private async updateService(
+    input: UpdateServiceCommandInput,
+  ): Promise<UpdateServiceCommandOutput> {
+    return this.sendAwsCommand<
+      UpdateServiceCommandInput,
+      UpdateServiceCommandOutput
+    >(UpdateServiceCommand, input);
+  }
+
   private buildDeleteServiceInput(
     serviceName: string,
   ): DeleteServiceCommandInput {
@@ -213,7 +240,8 @@ export class EcsService extends AwsService {
   ) {
     const registerTaskDefinitionInput =
       await this.buildRegisterTaskDefinitionInput(
-        dto,
+        dto.name,
+        dto.command,
         dockerImage,
         environmentId,
         taskRoleArn,
@@ -248,5 +276,28 @@ export class EcsService extends AwsService {
     } catch (error) {
       console.log(error);
     }
+  }
+
+  async updateEcsService(ecsConfig: ECSConfiguration) {
+    const registerTaskDefinitionInput =
+      await this.buildRegisterTaskDefinitionInput(
+        ecsConfig.serviceName,
+        ecsConfig.command,
+        ecsConfig.dockerImage,
+        ecsConfig.environmentId,
+        ecsConfig.taskRoleArn,
+        ecsConfig.taskExecutionRoleArn,
+      );
+
+    const taskDefResponse = await this.registerTaskDefinition(
+      registerTaskDefinitionInput,
+    );
+
+    const updateServiceInput = this.buildUpdateServiceInput(
+      taskDefResponse.taskDefinition.taskDefinitionArn,
+      ecsConfig.serviceName,
+    );
+
+    await this.updateService(updateServiceInput);
   }
 }

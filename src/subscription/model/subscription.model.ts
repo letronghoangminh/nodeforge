@@ -7,6 +7,10 @@ export class SubscriptionModel {
   id: number;
 
   @Expose()
+  @ApiProperty({ type: Number })
+  userId: number;
+
+  @Expose()
   @ApiProperty({ type: String })
   type: string;
 

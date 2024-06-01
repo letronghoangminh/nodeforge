@@ -19,7 +19,7 @@ import {
   ApiTags,
 } from '@nestjs/swagger';
 import { APISummaries } from 'src/helpers/helpers';
-import { UserGuard } from 'src/auth/guard/auth.guard';
+import { AdminGuard, UserGuard } from 'src/auth/guard/auth.guard';
 import { VerifyGuard } from 'src/auth/guard/verify.guard';
 import {
   CheckSubdomainDto,
@@ -28,6 +28,7 @@ import {
 } from './dto/deployment.dto';
 import { GetUser } from 'src/auth/decorator/get-user.decorator';
 import {
+  DeploymentByUserModel,
   DeploymentModel,
   EnvironmentModel,
   HealthMetricsModel,
@@ -148,5 +149,15 @@ export class DeploymentController {
     @GetUser() user: UserType,
   ): Promise<HealthMetricsModel> {
     return this.deploymentService.getHealthMetricsByDeploymentId(id, user);
+  }
+
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({ summary: APISummaries.ADMIN })
+  @ApiOkResponse({ type: [DeploymentByUserModel] })
+  @ApiBearerAuth()
+  @UseGuards(AdminGuard)
+  @Get('admin/deployments')
+  getAllDeployments(): Promise<DeploymentByUserModel[]> {
+    return this.deploymentService.getAllDeployments();
   }
 }

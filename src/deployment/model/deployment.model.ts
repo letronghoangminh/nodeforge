@@ -3,6 +3,7 @@ import { Expose, Transform } from 'class-transformer';
 import { AmplifyConfigurationModel } from 'src/frontend/model/frontend.model';
 import { ECSConfigurationModel } from 'src/backend/model/backend.model';
 import { PlainToInstance } from 'src/helpers/helpers';
+import { UserModel } from 'src/user/model/user.model';
 
 export class RepositoryModel {
   @Expose()
@@ -124,4 +125,16 @@ export class HealthMetricsModel {
   @Expose()
   @ApiProperty({ type: String })
   memory: string;
+}
+
+export class DeploymentByUserModel {
+  @Expose()
+  @ApiProperty({ type: UserModel })
+  @Transform(({ obj }) => PlainToInstance(UserModel, obj))
+  user: UserModel;
+
+  @Expose()
+  @ApiProperty({ type: [DeploymentModel] })
+  @Transform(({ obj }) => PlainToInstance(DeploymentModel, obj.Deployment))
+  deployments: DeploymentModel[];
 }

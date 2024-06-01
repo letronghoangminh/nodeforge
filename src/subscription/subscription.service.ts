@@ -12,7 +12,8 @@ import {
 import { PlainToInstance } from 'src/helpers/helpers';
 import { ConfigService } from '@nestjs/config';
 import Stripe from 'stripe';
-import { SubscriptionType } from '@prisma/client';
+import { Role, SubscriptionType } from '@prisma/client';
+import { UpdateSubscriptionDto } from './dto/subscription.dto';
 
 @Injectable()
 export class SubscriptionService {
@@ -103,6 +104,52 @@ export class SubscriptionService {
     });
 
     if (!subscription) throw new NotFoundException('Subscription not found');
+
+    return PlainToInstance(SubscriptionModel, subscription);
+  }
+
+  async getAllSubscriptions(): Promise<SubscriptionModel[]> {
+    const subscriptions = await this.prismaService.subscription.findMany({
+      where: {
+        user: {
+          role: {
+            not: Role.ADMIN,
+          },
+        },
+      },
+    });
+
+    return PlainToInstance(SubscriptionModel, subscriptions);
+  }
+
+  async updateSubscriptionType(
+    dto: UpdateSubscriptionDto,
+  ): Promise<SubscriptionModel> {
+    const existingSubscription =
+      await this.prismaService.subscription.findFirst({
+        where: {
+          id: dto.subscriptionId,
+        },
+      });
+
+    if (!existingSubscription)
+      throw new NotFoundException('Subscription not found');
+
+    if (
+      dto.subscriptionType !== SubscriptionType.FREE &&
+      dto.subscriptionType !== SubscriptionType.PRO
+    ) {
+      throw new BadRequestException('Subscription type is invalid');
+    }
+
+    const subscription = await this.prismaService.subscription.update({
+      where: {
+        id: dto.subscriptionId,
+      },
+      data: {
+        type: dto.subscriptionType as SubscriptionType,
+      },
+    });
 
     return PlainToInstance(SubscriptionModel, subscription);
   }

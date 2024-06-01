@@ -142,12 +142,17 @@ export class BackendService {
           dockerfile,
         );
 
-        const { secgroupId, listenerRuleArn, targetGroupArn } =
-          await this.deployBackendService(
-            createDeploymentData,
-            environmentId,
-            dockerImage,
-          );
+        const {
+          secgroupId,
+          listenerRuleArn,
+          targetGroupArn,
+          taskRoleArn,
+          taskExecutionRoleArn,
+        } = await this.deployBackendService(
+          createDeploymentData,
+          environmentId,
+          dockerImage,
+        );
 
         await this.prismaService.eCSConfiguration.create({
           data: {
@@ -161,6 +166,9 @@ export class BackendService {
             listenerRuleArn,
             targetGroupArn,
             secgroupId,
+            taskRoleArn,
+            taskExecutionRoleArn,
+            command: createDeploymentData.command,
           },
         });
 
@@ -253,6 +261,8 @@ export class BackendService {
     secgroupId: string;
     targetGroupArn: string;
     listenerRuleArn: string;
+    taskRoleArn: string;
+    taskExecutionRoleArn: string;
   }> {
     const secgroupId = await this.ec2Service.createSecurityGroupForECS(dto);
 
@@ -274,7 +284,13 @@ export class BackendService {
       taskExecutionRoleArn,
     );
 
-    return { secgroupId, targetGroupArn, listenerRuleArn };
+    return {
+      secgroupId,
+      targetGroupArn,
+      listenerRuleArn,
+      taskRoleArn,
+      taskExecutionRoleArn,
+    };
   }
 
   async createNewDeployment(
@@ -321,5 +337,15 @@ export class BackendService {
     );
 
     return healthMetrics;
+  }
+
+  async updateEnvironment(ecsConfigId: number): Promise<void> {
+    const ecsConfig = await this.prismaService.eCSConfiguration.findFirst({
+      where: {
+        id: ecsConfigId,
+      },
+    });
+
+    await this.ecsService.updateEcsService(ecsConfig);
   }
 }
