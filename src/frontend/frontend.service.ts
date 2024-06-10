@@ -75,16 +75,18 @@ export class FrontendService {
       },
     });
 
-    const deleteAppInput = {
-      appId: deployment.AmplifyConfiguration.appId,
-    };
-    await this.amplifyService.deleteApp(deleteAppInput);
-
-    await this.prismaService.amplifyConfiguration.delete({
-      where: {
+    if (deployment?.AmplifyConfiguration?.appId) {
+      const deleteAppInput = {
         appId: deployment.AmplifyConfiguration.appId,
-      },
-    });
+      };
+      await this.amplifyService.deleteApp(deleteAppInput);
+
+      await this.prismaService.amplifyConfiguration.delete({
+        where: {
+          appId: deployment.AmplifyConfiguration.appId,
+        },
+      });
+    }
 
     await this.prismaService.environment.delete({
       where: {
