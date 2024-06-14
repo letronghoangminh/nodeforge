@@ -160,4 +160,16 @@ export class DeploymentController {
   getAllDeployments(): Promise<DeploymentByUserModel[]> {
     return this.deploymentService.getAllDeployments();
   }
+
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({ summary: APISummaries.ADMIN })
+  @ApiOkResponse({ type: [DeploymentModel] })
+  @ApiBearerAuth()
+  @UseGuards(AdminGuard)
+  @Get('admin/:userId/deployments')
+  getAllDeploymentsForUser(
+    @Param('userId', ParseIntPipe) userId: number,
+  ): Promise<DeploymentModel[]> {
+    return this.deploymentService.getAllDeploymentsForUser(userId);
+  }
 }

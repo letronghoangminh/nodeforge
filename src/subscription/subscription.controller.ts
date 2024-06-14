@@ -9,6 +9,8 @@ import {
   Headers,
   Put,
   Body,
+  ParseIntPipe,
+  Param,
 } from '@nestjs/common';
 import {
   ApiBearerAuth,
@@ -57,6 +59,18 @@ export class SubscriptionController {
   @Get('admin/subscriptions')
   getAllSubscriptions(): Promise<SubscriptionModel[]> {
     return this.subscriptionService.getAllSubscriptions();
+  }
+
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({ summary: APISummaries.ADMIN })
+  @ApiOkResponse({ type: [SubscriptionModel] })
+  @ApiBearerAuth()
+  @UseGuards(AdminGuard)
+  @Get('admin/:userId/subscriptions')
+  getAllSubscriptionsForUser(
+    @Param('userId', ParseIntPipe) userId: number,
+  ): Promise<SubscriptionModel[]> {
+    return this.subscriptionService.getAllSubscriptionsForUser(userId);
   }
 
   @HttpCode(HttpStatus.OK)

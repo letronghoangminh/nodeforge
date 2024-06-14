@@ -485,4 +485,19 @@ export class DeploymentService {
 
     return PlainToInstance(DeploymentByUserModel, deploymentByUsers);
   }
+
+  async getAllDeploymentsForUser(userId: number): Promise<DeploymentModel[]> {
+    const deployments = await this.prismaService.deployment.findMany({
+      where: {
+        userId,
+      },
+      include: {
+        ECSConfiguration: true,
+        AmplifyConfiguration: true,
+        repository: true,
+      },
+    });
+
+    return PlainToInstance(DeploymentModel, deployments);
+  }
 }
