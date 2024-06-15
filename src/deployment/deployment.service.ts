@@ -481,6 +481,7 @@ export class DeploymentService {
         role: {
           not: Role.ADMIN,
         },
+        isDeleted: false,
       },
       include: {
         Deployment: {
