@@ -158,13 +158,18 @@ export class DeploymentService {
 
   async getDeploymentById(
     id: number,
-    user: { id: number },
+    user: { id: number; role: string },
   ): Promise<DeploymentModel> {
+    const condition = {
+      id: id,
+    };
+
+    if (user.role === Role.USER) {
+      condition['userId'] = user.id;
+    }
+
     const deployment = await this.prismaService.deployment.findFirst({
-      where: {
-        id: id,
-        userId: user.id,
-      },
+      where: condition,
       include: {
         repository: true,
         AmplifyConfiguration: true,
