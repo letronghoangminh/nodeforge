@@ -179,13 +179,18 @@ export class DeploymentService {
 
   async getEnvironmentByDeploymentId(
     id: number,
-    user: { id: number },
+    user: { id: number; role: string },
   ): Promise<EnvironmentModel> {
+    const condition = {
+      id: id,
+    };
+
+    if (user.role === Role.USER) {
+      condition['userId'] = user.id;
+    }
+
     const deployment = await this.prismaService.deployment.findFirst({
-      where: {
-        id: id,
-        userId: user.id,
-      },
+      where: condition,
       select: {
         id: true,
         ECSConfiguration: {
