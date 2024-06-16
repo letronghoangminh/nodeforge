@@ -72,17 +72,18 @@ export class CloudWatchLogService extends AwsService {
 
     let logStreamName;
 
-    describeLogStreamResponse.logStreams.map((logStream) => {
-      if (logStream.logStreamName.startsWith(name)) {
-        logStreamName = logStream.logStreamName;
+    for (let i = 0; i <= describeLogStreamResponse.logStreams.length; i++) {
+      if (
+        describeLogStreamResponse.logStreams[i].logStreamName.startsWith(name)
+      ) {
+        logStreamName = describeLogStreamResponse.logStreams[i].logStreamName;
+        break;
       }
-    });
+    }
 
     if (!logStreamName) return [];
 
     const getLogEventsInput = this.buildGetLogEventsInput(logStreamName, 100);
-
-    console.log(getLogEventsInput);
 
     const getLogEventsResponse = await this.getLogEvents(getLogEventsInput);
 

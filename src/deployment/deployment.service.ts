@@ -283,40 +283,45 @@ export class DeploymentService {
     id: number,
     user: { id: number },
   ): Promise<LogModel[]> {
-    const deployment = await this.prismaService.deployment.findFirst({
-      where: {
-        id: id,
-        userId: user.id,
-      },
-      include: {
-        ECSConfiguration: {
-          select: {
-            environmentId: true,
-          },
-        },
-        AmplifyConfiguration: {
-          select: {
-            appId: true,
-          },
-        },
-      },
-    });
+    // const deployment = await this.prismaService.deployment.findFirst({
+    //   where: {
+    //     id: id,
+    //     userId: user.id,
+    //   },
+    //   include: {
+    //     ECSConfiguration: {
+    //       select: {
+    //         environmentId: true,
+    //       },
+    //     },
+    //     AmplifyConfiguration: {
+    //       select: {
+    //         appId: true,
+    //       },
+    //     },
+    //   },
+    // });
 
-    if (!deployment) throw new NotFoundException('No deployment found');
+    return PlainToInstance(
+      LogModel,
+      await this.backendService.getDeploymentLogs('nest'),
+    );
 
-    if (deployment.AmplifyConfiguration) {
-      return PlainToInstance(
-        LogModel,
-        await this.frontendService.getDeploymentLogs(
-          deployment.AmplifyConfiguration.appId,
-        ),
-      );
-    } else if (deployment.ECSConfiguration) {
-      return PlainToInstance(
-        LogModel,
-        await this.backendService.getDeploymentLogs(deployment.name),
-      );
-    }
+    // if (!deployment) throw new NotFoundException('No deployment found');
+
+    // if (deployment.AmplifyConfiguration) {
+    //   return PlainToInstance(
+    //     LogModel,
+    //     await this.frontendService.getDeploymentLogs(
+    //       deployment.AmplifyConfiguration.appId,
+    //     ),
+    //   );
+    // } else if (deployment.ECSConfiguration) {
+    //   return PlainToInstance(
+    //     LogModel,
+    //     await this.backendService.getDeploymentLogs(deployment.name),
+    //   );
+    // }
   }
 
   async getHealthMetricsByDeploymentId(
