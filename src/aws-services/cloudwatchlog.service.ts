@@ -9,6 +9,7 @@ import {
   GetLogEventsCommand,
   GetLogEventsCommandInput,
   GetLogEventsCommandOutput,
+  OrderBy,
 } from '@aws-sdk/client-cloudwatch-logs';
 
 @Injectable()
@@ -26,6 +27,8 @@ export class CloudWatchLogService extends AwsService {
     const input = {
       logGroupName: this.configService.get('aws.ecs.cloudwatchLogGroup'),
       logStreamNamePrefix: logStreamPrefix,
+      orderBy: OrderBy.LastEventTime,
+      descending: true,
     };
 
     return input;
@@ -72,9 +75,7 @@ export class CloudWatchLogService extends AwsService {
     );
 
     const getLogEventsInput = this.buildGetLogEventsInput(
-      describeLogStreamResponse.logStreams[
-        describeLogStreamResponse.logStreams.length - 1
-      ].logStreamName,
+      describeLogStreamResponse.logStreams[0].logStreamName,
       100,
     );
 
