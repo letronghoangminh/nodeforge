@@ -63,14 +63,14 @@ export class SubscriptionController {
 
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: APISummaries.ADMIN })
-  @ApiOkResponse({ type: [SubscriptionModel] })
+  @ApiOkResponse({ type: SubscriptionModel })
   @ApiBearerAuth()
   @UseGuards(AdminGuard)
-  @Get('admin/:userId/subscriptions')
+  @Get('admin/:userId/subscription')
   getAllSubscriptionsForUser(
     @Param('userId', ParseIntPipe) userId: number,
-  ): Promise<SubscriptionModel[]> {
-    return this.subscriptionService.getAllSubscriptionsForUser(userId);
+  ): Promise<SubscriptionModel> {
+    return this.subscriptionService.getSubscriptionForUser(userId);
   }
 
   @HttpCode(HttpStatus.OK)

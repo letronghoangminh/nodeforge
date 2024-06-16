@@ -24,6 +24,7 @@ import { VerifyGuard } from 'src/auth/guard/verify.guard';
 import {
   CheckSubdomainDto,
   CreateDeploymentDto,
+  PingDto,
   UpdateEnvironmentDto,
 } from './dto/deployment.dto';
 import { GetUser } from 'src/auth/decorator/get-user.decorator';
@@ -33,6 +34,7 @@ import {
   EnvironmentModel,
   HealthMetricsModel,
   LogModel,
+  PingModel,
 } from './model/deployment.model';
 import { UserType } from 'src/helpers/types';
 
@@ -171,5 +173,15 @@ export class DeploymentController {
     @Param('userId', ParseIntPipe) userId: number,
   ): Promise<DeploymentModel[]> {
     return this.deploymentService.getAllDeploymentsForUser(userId);
+  }
+
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({ summary: APISummaries.USER })
+  @ApiOkResponse({ type: PingModel })
+  @ApiBearerAuth()
+  @UseGuards(UserGuard, VerifyGuard)
+  @Post('ping')
+  pingSite(@Body() dto: PingDto): Promise<PingModel> {
+    return this.deploymentService.pingSite(dto.url);
   }
 }

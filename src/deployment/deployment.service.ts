@@ -15,6 +15,7 @@ import {
   EnvironmentModel,
   HealthMetricsModel,
   LogModel,
+  PingModel,
 } from './model/deployment.model';
 import { FrontendService } from 'src/frontend/frontend.service';
 import {
@@ -29,6 +30,8 @@ import { PlainToInstance } from 'src/helpers/helpers';
 import { GithubService } from 'src/github/github.service';
 import { OpenaiService } from 'src/openai/openai.service';
 import { BackendService } from 'src/backend/backend.service';
+import axios from 'axios';
+import { config } from 'process';
 
 @Injectable()
 export class DeploymentService {
@@ -510,5 +513,23 @@ export class DeploymentService {
     });
 
     return PlainToInstance(DeploymentModel, deployments);
+  }
+
+  async pingSite(url: string): Promise<PingModel> {
+    try {
+      const response = await axios.get(url, {
+        timeout: 10000,
+      });
+
+      console.log(response.status);
+
+      if (response.status >= 200 && response.status <= 400) {
+        return PlainToInstance(PingModel, { ok: true });
+      }
+
+      return PlainToInstance(PingModel, { ok: false });
+    } catch {
+      return PlainToInstance(PingModel, { ok: false });
+    }
   }
 }

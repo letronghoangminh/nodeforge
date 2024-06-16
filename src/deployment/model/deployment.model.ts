@@ -138,3 +138,9 @@ export class DeploymentByUserModel {
   @Transform(({ obj }) => PlainToInstance(DeploymentModel, obj.Deployment))
   deployments: DeploymentModel[];
 }
+
+export class PingModel {
+  @Expose()
+  @ApiProperty({ type: Boolean })
+  ok: boolean;
+}

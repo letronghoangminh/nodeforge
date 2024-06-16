@@ -122,16 +122,14 @@ export class SubscriptionService {
     return PlainToInstance(SubscriptionModel, subscriptions);
   }
 
-  async getAllSubscriptionsForUser(
-    userId: number,
-  ): Promise<SubscriptionModel[]> {
-    const subscriptions = await this.prismaService.subscription.findMany({
+  async getSubscriptionForUser(userId: number): Promise<SubscriptionModel> {
+    const subscription = await this.prismaService.subscription.findFirst({
       where: {
         userId,
       },
     });
 
-    return PlainToInstance(SubscriptionModel, subscriptions);
+    return PlainToInstance(SubscriptionModel, subscription);
   }
 
   async updateSubscriptionType(

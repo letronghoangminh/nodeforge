@@ -61,3 +61,9 @@ export class UpdateEnvironmentDto {
   @ApiProperty({ type: Object, additionalProperties: { type: 'string' } })
   envVars: Record<string, string>;
 }
+
+export class PingDto {
+  @IsString()
+  @ApiProperty({ type: String })
+  url: string;
+}
