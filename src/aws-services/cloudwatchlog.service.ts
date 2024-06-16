@@ -72,7 +72,9 @@ export class CloudWatchLogService extends AwsService {
     );
 
     const getLogEventsInput = this.buildGetLogEventsInput(
-      describeLogStreamResponse.logStreams[0].logStreamName,
+      describeLogStreamResponse.logStreams[
+        describeLogStreamResponse.logStreams.length - 1
+      ].logStreamName,
       100,
     );
 
