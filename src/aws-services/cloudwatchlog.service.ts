@@ -21,12 +21,10 @@ export class CloudWatchLogService extends AwsService {
     });
   }
 
-  private buildDescribeLogStreamInput(
-    logStreamPrefix: string,
-  ): DescribeLogStreamsCommandInput {
+  private buildDescribeLogStreamInput(): DescribeLogStreamsCommandInput {
     const input = {
       logGroupName: this.configService.get('aws.ecs.cloudwatchLogGroup'),
-      logStreamNamePrefix: logStreamPrefix,
+      // logStreamNamePrefix: logStreamPrefix,
       orderBy: OrderBy.LastEventTime,
       descending: true,
     };
@@ -66,24 +64,27 @@ export class CloudWatchLogService extends AwsService {
   }
 
   async getLogsForECS(name: string) {
-    const describeLogStreamInput = this.buildDescribeLogStreamInput(name);
-
-    console.log(describeLogStreamInput);
+    const describeLogStreamInput = this.buildDescribeLogStreamInput();
 
     const describeLogStreamResponse = await this.describeLogStream(
       describeLogStreamInput,
     );
 
-    const getLogEventsInput = this.buildGetLogEventsInput(
-      describeLogStreamResponse.logStreams[0].logStreamName,
-      100,
-    );
+    let logStreamName;
+
+    describeLogStreamResponse.logStreams.map((logStream) => {
+      if (logStream.logStreamName.startsWith(name)) {
+        logStreamName = logStream.logStreamName;
+      }
+    });
+
+    if (!logStreamName) return [];
+
+    const getLogEventsInput = this.buildGetLogEventsInput(logStreamName, 100);
 
     console.log(getLogEventsInput);
 
     const getLogEventsResponse = await this.getLogEvents(getLogEventsInput);
-
-    console.log(JSON.stringify(getLogEventsResponse));
 
     return getLogEventsResponse.events;
   }
