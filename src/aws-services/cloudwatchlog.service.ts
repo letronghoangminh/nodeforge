@@ -65,6 +65,8 @@ export class CloudWatchLogService extends AwsService {
   async getLogsForECS(name: string) {
     const describeLogStreamInput = this.buildDescribeLogStreamInput(name);
 
+    console.log(describeLogStreamInput);
+
     const describeLogStreamResponse = await this.describeLogStream(
       describeLogStreamInput,
     );
@@ -74,7 +76,11 @@ export class CloudWatchLogService extends AwsService {
       100,
     );
 
+    console.log(getLogEventsInput);
+
     const getLogEventsResponse = await this.getLogEvents(getLogEventsInput);
+
+    console.log(JSON.stringify(getLogEventsResponse));
 
     return getLogEventsResponse.events;
   }
