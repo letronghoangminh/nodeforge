@@ -328,7 +328,22 @@ export class BackendService {
     const logEvents = await this.cloudwatchlogService.getLogsForECS(
       serviceName,
     );
-    return logEvents;
+
+    const events = [];
+
+    logEvents.map((logEvent) => {
+      const event = {
+        message: logEvent.message,
+        timestamp: new Date(+logEvent.timestamp.toString().slice(0, 10) * 1000)
+          .toISOString()
+          .slice(0, 19)
+          .replace('T', ' '),
+      };
+
+      events.push(event);
+    });
+
+    return events;
   }
 
   async getHealthMetrics(serviceName: string) {
