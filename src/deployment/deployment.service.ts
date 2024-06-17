@@ -356,8 +356,6 @@ export class DeploymentService {
         deployment.name,
       );
 
-      console.log(healthMetrics);
-
       return PlainToInstance(HealthMetricsModel, {
         cpu: healthMetrics.cpu?.Average?.toString(),
         memory: healthMetrics.memory?.Average?.toString(),
@@ -520,8 +518,6 @@ export class DeploymentService {
       const response = await axios.get(url, {
         timeout: 10000,
       });
-
-      console.log(response.status);
 
       if (
         (response.status >= 200 && response.status <= 400) ||
