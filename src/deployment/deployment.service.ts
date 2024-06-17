@@ -519,6 +519,8 @@ export class DeploymentService {
         timeout: 10000,
       });
 
+      console.log(response.status);
+
       if (
         (response.status >= 200 && response.status <= 400) ||
         [400, 401, 403, 404].includes(response.status)
