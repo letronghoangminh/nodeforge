@@ -523,7 +523,10 @@ export class DeploymentService {
 
       console.log(response.status);
 
-      if (response.status >= 200 && response.status <= 400) {
+      if (
+        (response.status >= 200 && response.status <= 400) ||
+        [400, 401, 403, 404].includes(response.status)
+      ) {
         return PlainToInstance(PingModel, { ok: true });
       }
 
