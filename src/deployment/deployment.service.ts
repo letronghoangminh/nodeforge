@@ -519,17 +519,16 @@ export class DeploymentService {
         timeout: 10000,
       });
 
-      console.log(response.status);
-
-      if (
-        (response.status >= 200 && response.status <= 400) ||
-        [400, 401, 403, 404].includes(response.status)
-      ) {
+      if (response.status >= 200 && response.status <= 400) {
         return PlainToInstance(PingModel, { ok: true });
       }
 
       return PlainToInstance(PingModel, { ok: false });
-    } catch {
+    } catch (error) {
+      if ([400, 401, 403, 404].includes(error.response.data.statusCode)) {
+        return PlainToInstance(PingModel, { ok: true });
+      }
+
       return PlainToInstance(PingModel, { ok: false });
     }
   }
