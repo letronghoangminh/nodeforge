@@ -97,7 +97,7 @@ export class AuthService {
       },
     });
 
-    if (query.token === user.verifyToken) {
+    if (user) {
       await this.prisma.user.update({
         where: {
           username: user.username,

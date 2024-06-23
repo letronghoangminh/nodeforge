@@ -58,13 +58,11 @@ export class AuthController {
     return this.authService.refreshToken(dto);
   }
 
-  @ApiOperation({ summary: APISummaries.USER })
+  @ApiOperation({ summary: APISummaries.UNAUTH })
   @HttpCode(HttpStatus.OK)
   @ApiOkResponse({ type: String })
-  @ApiBearerAuth()
-  @UseGuards(UserGuard)
   @Get('verify')
-  verify(@Query() query: VerifyUserDto, @GetUser() user: UserType) {
+  verify(@Query() query: VerifyUserDto) {
     return this.authService.verify(query);
   }
 
