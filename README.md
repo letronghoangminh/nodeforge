@@ -1,9 +1,5 @@
 # NodeForge
 
-<p align="center">
-  <img src="https://via.placeholder.com/200x200.png?text=NodeForge" alt="NodeForge Logo" width="200"/>
-</p>
-
 NodeForge is a modern Platform-as-a-Service (PaaS) solution similar to Heroku or Vercel, designed specifically for JavaScript application deployment. It simplifies the deployment process by connecting directly to your GitHub repositories and deploying both frontend and backend JavaScript frameworks to AWS infrastructure with minimal configuration.
 
 ## 🚀 Features
